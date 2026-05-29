@@ -273,6 +273,8 @@ const WorkerDashboard: React.FC<WorkerDashboardProps> = ({ onNavigate }) => {
               onClick={() => {
                 if (card.id === 'screen') onNavigate('screening');
                 else if (card.id === 'followups') onNavigate('followups');
+                else if (card.id === 'children') onNavigate('children');
+                else if (card.id === 'report') onNavigate('report');
               }}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
