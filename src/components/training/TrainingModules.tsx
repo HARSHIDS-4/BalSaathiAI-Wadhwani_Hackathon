@@ -15,7 +15,6 @@ import {
   Play,
   Clock,
   X,
-  Lightbulb,
 } from 'lucide-react';
 
 const TrainingModules: React.FC = () => {
