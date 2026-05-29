@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { COLORS } from '../../constants/design-system';
 import { useLanguage } from '../../contexts/AppContext';
+import { DEMO_WORKER } from '../../data/demo-data';
 import AnimatedButton from '../shared/AnimatedButton';
 import { Play, ArrowRight, Heart, Shield, Users, Sparkles, Activity, Phone } from 'lucide-react';
 
@@ -254,7 +255,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                         transition={{ duration: 2, repeat: Infinity }}
                       >
                         <img
-                          src="https://images.unsplash.com/photo-1531123897727-8f9e37d05c26?w=100&h=100&fit=crop&crop=face"
+                          src={DEMO_WORKER.avatar}
                           alt="Anganwadi Worker"
                           className="w-full h-full object-cover"
                         />

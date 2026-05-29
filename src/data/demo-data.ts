@@ -9,6 +9,10 @@ export const LANGUAGES = [
   { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', flag: '🇮🇳' },
 ];
 
+// Use curated royalty-free images from Unsplash Source for realistic portraits.
+// These are fetched at runtime from the internet. If you prefer local copies,
+// download images into `public/assets/` and update the URLs below.
+
 export const TRANSLATIONS: Record<string, Record<string, string>> = {
   hi: {
     // Hero
@@ -167,7 +171,8 @@ export const DEMO_WORKER = {
   id: 'worker-001',
   name: 'Savitri Devi',
   nameHindi: 'सावित्री देवी',
-  avatar: 'https://images.unsplash.com/photo-1531123897727-8f9e37d05c26?w=150&h=150&fit=crop&crop=face',
+  // vendored local portrait (run `npm run vendor-images` to download)
+  avatar: '/assets/vendor/worker-1.jpg',
   centre: 'Anganwadi Centre 14',
   village: 'Rampur',
   district: 'Jharkhand',
@@ -193,7 +198,7 @@ export const DEMO_CHILDREN = [
     motherNameHindi: 'रानी देवी',
     village: 'Rampur',
     centre: 'Anganwadi Centre 14',
-    photo: 'https://images.unsplash.com/photo-1503454530258-124fbc43f3d1?w=200&h=200&fit=crop&crop=face',
+    photo: '/assets/vendor/child-1.jpg',
     status: 'refer',
     statusHindi: 'अभी रेफर करें',
     flaggedDomain: 'Speech & Language',
@@ -212,7 +217,7 @@ export const DEMO_CHILDREN = [
     motherNameHindi: 'सुनीता देवी',
     village: 'Rampur',
     centre: 'Anganwadi Centre 14',
-    photo: 'https://images.unsplash.com/photo-1545558014-5797be6f6fb7?w=200&h=200&fit=crop&crop=face',
+    photo: '/assets/vendor/child-2.jpg',
     status: 'on-track',
     statusHindi: 'सही राह पर',
     flaggedDomain: null,
@@ -230,7 +235,7 @@ export const DEMO_CHILDREN = [
     motherNameHindi: 'प्रिया शर्मा',
     village: 'Rampur',
     centre: 'Anganwadi Centre 14',
-    photo: 'https://images.unsplash.com/photo-1516627145496-d6bd64963f1c?w=200&h=200&fit=crop&crop=face',
+    photo: '/assets/vendor/child-3.jpg',
     status: 'watch',
     statusHindi: 'निगरानी',
     flaggedDomain: 'Motor Skills',
@@ -248,7 +253,7 @@ export const DEMO_CHILDREN = [
     motherNameHindi: 'लक्ष्मी देवी',
     village: 'Rampur',
     centre: 'Anganwadi Centre 14',
-    photo: 'https://images.unsplash.com/photo-1491013516836-7db6cdee2dc5?w=200&h=200&fit=crop&crop=face',
+    photo: '/assets/vendor/child-4.jpg',
     status: 'not-screened',
     statusHindi: 'स्क्रीन नहीं हुआ',
     flaggedDomain: null,
