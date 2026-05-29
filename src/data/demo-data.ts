@@ -261,6 +261,11 @@ export const DEMO_CHILDREN = [
   },
 ];
 
+export const formatChildAge = (months: number, isHindi: boolean) => {
+  const unit = isHindi ? (months === 1 ? 'महीना' : 'महीने') : (months === 1 ? 'month' : 'months');
+  return `${months} ${unit}`;
+};
+
 // Referral Centres
 export const REFERRAL_CENTRES = [
   {
