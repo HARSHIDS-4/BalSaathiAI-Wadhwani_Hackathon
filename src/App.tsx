@@ -172,7 +172,6 @@ const MainApp: React.FC = () => {
                   </h2>
                   <ul className="space-y-3 text-gray-700">
                     <li>{isHindi ? '• इस सप्ताह 6 बच्चों को आगे की देखभाल के लिए भेजा गया।' : '• 6 children were referred for further care this week.'}</li>
-                    <li>{isHindi ? '• 94.2% स्क्रीनिंग सटीकता दर्ज की गई।' : '• 94.2% screening accuracy recorded.'}</li>
                     <li>{isHindi ? '• सभी फॉलो-अप अगले 7 दिनों में ट्रैक किए जा रहे हैं।' : '• All follow-ups are being tracked over the next 7 days.'}</li>
                   </ul>
                 </div>

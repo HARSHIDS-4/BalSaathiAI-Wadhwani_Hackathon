@@ -501,14 +501,14 @@ export const TRAINING_MODULES = [
 
 // Impact Statistics
 export const IMPACT_STATS = {
-  childrenScreened: 15732,
-  childrenFlagged: 1243,
-  referralsGenerated: 891,
-  followUpsCompleted: 678,
-  districts: 47,
-  anganwadiWorkers: 2134,
-  accuracyRate: 94.2,
-  parentSatisfaction: 97.8,
+  childrenScreened: 0,
+  childrenFlagged: 0,
+  referralsGenerated: 0,
+  followUpsCompleted: 0,
+  districts: 0,
+  anganwadiWorkers: 0,
+  accuracyRate: 0,
+  parentSatisfaction: 0,
 };
 
 // Activity Timeline

@@ -58,12 +58,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     },
   ];
 
-  const stats = [
-    { value: '15,000+', label: isHindi ? 'बच्चे स्क्रीन हुए' : 'Children Screened' },
-    { value: '47', label: isHindi ? 'जिले' : 'Districts' },
-    { value: '2,100+', label: isHindi ? 'कार्यकर्ता' : 'Workers' },
-    { value: '94%', label: isHindi ? 'सटीकता' : 'Accuracy' },
-  ];
+  
 
   return (
     <div ref={containerRef} className="relative">
@@ -446,31 +441,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       <section className="py-20 px-4 md:px-8">
         <div className="max-w-5xl mx-auto">
           <motion.div
-            className="p-8 md:p-12 rounded-3xl"
+            className="p-8 md:p-12 rounded-3xl text-center"
             style={{
-              background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%)`,
-              boxShadow: '0 20px 60px rgba(45, 106, 79, 0.3)',
+              background: 'transparent',
             }}
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
           >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-              {stats.map((stat, i) => (
-                <motion.div
-                  key={i}
-                  className="text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    {stat.value}
+            <div>
+              <div className="mx-auto" style={{ maxWidth: 900 }}>
+                <div className="text-center">
+                  <div className="font-bold text-2xl md:text-3xl lg:text-4xl" style={{ color: '#2D6A4F' }}>
+                    Built for India's 1.4 million frontline workers.
                   </div>
-                  <div className="text-sm text-white/80">{stat.label}</div>
-                </motion.div>
-              ))}
+                  <div className="font-bold text-2xl md:text-3xl lg:text-4xl mt-3" style={{ color: '#2D6A4F' }}>
+                    Designed for the 158 million children they serve.
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
