@@ -5,6 +5,7 @@ import { useLanguage } from '../../contexts/AppContext';
 import { SCREENING_QUESTIONS, FOLLOW_UP_QUESTIONS } from '../../data/demo-data';
 import AnimatedButton from '../shared/AnimatedButton';
 import StatusBadge from '../shared/StatusBadge';
+import { predictRisk, PredictionRequest, PredictionResponse } from "../../services/api";
 import {
   ChevronRight,
   ChevronLeft,
@@ -17,7 +18,6 @@ import {
   Clock,
   Heart,
   ArrowRight,
-  Loader2,
 } from 'lucide-react';
 
 interface ScreeningFlowProps {
@@ -32,44 +32,66 @@ interface ScreeningResult {
   nextSteps: string[];
 }
 
-type QuestionAnswer = 'yes' | 'sometimes' | 'no';
+type QuestionAnswer = 'Yes' | 'Sometimes' | 'No';
+
+const FIXED_DOMAINS = [
+  { id: 'speech', name: 'Speech & Language', nameHindi: 'भाषण और भाषा', icon: MessageCircle, color: COLORS.primary, description: 'This section evaluates communication and language milestones.', descriptionHindi: 'यह अनुभाग संचार और भाषा के मील के पत्थर का मूल्यांकन करता है।' },
+  { id: 'motor', name: 'Motor Skills', nameHindi: 'मोटर कौशल', icon: '🤸', color: COLORS.success, description: 'This section evaluates gross and fine motor skills.', descriptionHindi: 'यह अनुभाग सकल और सूक्ष्म मोटर कौशल का मूल्यांकन करता है।' },
+  { id: 'social', name: 'Social & Emotional', nameHindi: 'सामाजिक और भावनात्मक', icon: Heart, color: COLORS.accent, description: 'This section evaluates social interaction and emotional development.', descriptionHindi: 'यह अनुभाग सामाजिक संपर्क और भावनात्मक विकास का मूल्यांकन करता है।' },
+  { id: 'cognitive', name: 'Cognitive', nameHindi: 'संज्ञानात्मक', icon: '🧠', color: COLORS.watch, description: 'This section evaluates cognitive and problem-solving skills.', descriptionHindi: 'यह अनुभाग संज्ञानात्मक और समस्या-समाधान कौशल का मूल्यांकन करता है।' },
+];
+
+type FlowStep = 
+  | 'age' 
+  | 'gender' 
+  | 'flashcard' 
+  | 'questions' 
+  | 'processing' 
+  | 'result';
 
 const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => {
   const { t, isHindi } = useLanguage();
-  const [step, setStep] = useState<'age' | 'domain' | 'questions' | 'processing' | 'result'>('age');
+  const [step, setStep] = useState<FlowStep>('age');
   const [selectedAge, setSelectedAge] = useState<number | null>(null);
-  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
+  const [ageInput, setAgeInput] = useState<string>('');
+  const [selectedGender, setSelectedGender] = useState<'Male' | 'Female' | null>(null);
+  const [currentDomainIndex, setCurrentDomainIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, QuestionAnswer>>({});
+  const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, 'Yes' | 'No' | null>>({});
   const [showFollowUp, setShowFollowUp] = useState(false);
-  const [currentFollowUpIndex, setCurrentFollowUpIndex] = useState(0);
-  const [showAiInsight, setShowAiInsight] = useState(false);
+  const [predictionResult, setPredictionResult] = useState<PredictionResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const domains = [
-    { id: 'speech', name: t('speechLanguage'), icon: MessageCircle, color: COLORS.primary },
-    { id: 'motor', name: t('motorSkills'), icon: '🤸', color: COLORS.success },
-    { id: 'social', name: t('socialEmotional'), icon: Heart, color: COLORS.accent },
-    { id: 'cognitive', name: t('cognitive'), icon: '🧠', color: COLORS.watch },
-  ];
+  const currentDomain = FIXED_DOMAINS[currentDomainIndex];
 
-  const ageOptions = [12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72];
+  const getQuestionsForDomain = useCallback((domainId: string) => {
+    const ageRange = selectedAge && selectedAge <= 24 ? '18-24' : '24-36';
+    return SCREENING_QUESTIONS[domainId]?.[ageRange] || [];
+  }, [selectedAge]);
 
-  const getQuestionsForAge = useCallback(() => {
-    if (!selectedAge || selectedDomains.length === 0) return [];
+  const currentDomainQuestions = currentDomain ? getQuestionsForDomain(currentDomain.id) : [];
+  const currentQuestion = currentDomainQuestions[currentQuestionIndex];
 
-    const ageRange = selectedAge <= 24 ? '18-24' : '24-36';
-    const allQuestions: any[] = [];
+  const getFollowUpIdForQuestion = (questionId: string): string | null => {
+    const match = questionId.match(/^(.+)_q(\d+)$/);
+    if (!match) return null;
+    return `${match[1]}_followup_q${match[2]}`;
+  };
 
-    selectedDomains.forEach((domain) => {
-      const domainQuestions = SCREENING_QUESTIONS[domain]?.[ageRange] || [];
-      allQuestions.push(...domainQuestions);
-    });
+  const getFollowUpQuestion = (domain: string, questionId: string) => {
+    const followUpId = getFollowUpIdForQuestion(questionId);
+    if (!followUpId) return null;
+    const followUps = FOLLOW_UP_QUESTIONS[domain] || [];
+    return followUps.find(fq => fq.id === followUpId) || null;
+  };
 
-    return allQuestions;
-  }, [selectedAge, selectedDomains]);
-
-  const questions = getQuestionsForAge();
-  const currentQuestion = questions[currentQuestionIndex];
+  const handleAgeSubmit = () => {
+    const age = parseInt(ageInput, 10);
+    if (isNaN(age) || age < 12 || age > 72) return;
+    setSelectedAge(age);
+    setStep('gender');
+  };
 
   const handleAnswer = (answer: QuestionAnswer) => {
     if (!currentQuestion) return;
@@ -77,78 +99,79 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
     const questionId = currentQuestion.id;
     setAnswers((prev) => ({ ...prev, [questionId]: answer }));
 
-    if (answer === 'no') {
+    if (answer === 'No') {
       setShowFollowUp(true);
-      setShowAiInsight(true);
     } else {
+      const followUpId = getFollowUpIdForQuestion(questionId);
+      if (followUpId) {
+        setFollowUpAnswers((prev) => ({ ...prev, [followUpId]: null }));
+      }
       moveToNextQuestion();
     }
   };
 
   const moveToNextQuestion = () => {
     setShowFollowUp(false);
-    setShowAiInsight(false);
-    setCurrentFollowUpIndex(0);
 
-    if (currentQuestionIndex < questions.length - 1) {
+    if (currentQuestionIndex < currentDomainQuestions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
-      setStep('processing');
-      setTimeout(() => {
-        calculateResult();
-      }, 3000);
+      // Domain complete, move to next domain flashcard or submit
+      if (currentDomainIndex < FIXED_DOMAINS.length - 1) {
+        setCurrentDomainIndex((prev) => prev + 1);
+        setCurrentQuestionIndex(0);
+        setStep('flashcard');
+      } else {
+        submitPrediction();
+      }
     }
   };
 
-  const handleFollowUpAnswer = (answer: QuestionAnswer) => {
+  const handleFollowUpAnswer = (answer: 'Yes' | 'No') => {
     if (!currentQuestion) return;
 
-    const followUps = FOLLOW_UP_QUESTIONS[currentQuestion.domain] || [];
-
-    if (currentFollowUpIndex < followUps.length - 1 && answer === 'no') {
-      setCurrentFollowUpIndex((prev) => prev + 1);
-    } else {
-      moveToNextQuestion();
+    const followUpId = getFollowUpIdForQuestion(currentQuestion.id);
+    if (followUpId) {
+      setFollowUpAnswers((prev) => ({ ...prev, [followUpId]: answer }));
     }
+
+    moveToNextQuestion();
   };
 
-  const calculateResult = () => {
-    const noCount = Object.values(answers).filter((a) => a === 'no').length;
-    const sometimesCount = Object.values(answers).filter((a) => a === 'sometimes').length;
+  const submitPrediction = async () => {
+    setStep('processing');
+    setError(null);
 
-    let status: 'on-track' | 'watch' | 'refer';
-    if (noCount >= 2) {
-      status = 'refer';
-    } else if (noCount === 1 || sometimesCount >= 2) {
-      status = 'watch';
-    } else {
-      status = 'on-track';
+    try {
+      const payload: PredictionRequest = {
+        Age_Months: selectedAge || 0,
+        Gender: selectedGender || 'Male',
+        "Does child respond when called by name?": answers['speech_q1'] || 'Yes',
+        "If not, does child react to familiar voices?": followUpAnswers['speech_followup_q1'] !== undefined ? followUpAnswers['speech_followup_q1'] : null,
+        "Can child communicate basic needs using words or gestures?": answers['speech_q2'] || 'Yes',
+        "If not, does child attempt communication through sounds or pointing?": followUpAnswers['speech_followup_q2'] !== undefined ? followUpAnswers['speech_followup_q2'] : null,
+        "Can child walk without support?": answers['motor_q1'] || 'Yes',
+        "If not, can child stand while holding furniture?": followUpAnswers['motor_followup_q1'] !== undefined ? followUpAnswers['motor_followup_q1'] : null,
+        "Can child climb stairs or furniture independently?": answers['motor_q2'] || 'Yes',
+        "If not, can child move independently between locations?": followUpAnswers['motor_followup_q2'] !== undefined ? followUpAnswers['motor_followup_q2'] : null,
+        "Does child make eye contact during interaction?": answers['social_q1'] || 'Yes',
+        "If not, does child respond to smiling faces?": followUpAnswers['social_followup_q1'] !== undefined ? followUpAnswers['social_followup_q1'] : null,
+        "Does child engage in play with caregivers or peers?": answers['social_q2'] || 'Yes',
+        "If not, does child show interest when others are playing nearby?": followUpAnswers['social_followup_q2'] !== undefined ? followUpAnswers['social_followup_q2'] : null,
+        "Can child identify familiar people or objects?": answers['cognitive_q1'] || 'Yes',
+        "If not, can child recognize their primary caregiver?": followUpAnswers['cognitive_followup_q1'] !== undefined ? followUpAnswers['cognitive_followup_q1'] : null,
+        "Can child follow age-appropriate instructions?": answers['cognitive_q2'] || 'Yes',
+        "If not, can child follow simple one-step commands?": followUpAnswers['cognitive_followup_q2'] !== undefined ? followUpAnswers['cognitive_followup_q2'] : null,
+      };
+
+      const result = await predictRisk(payload);
+      setPredictionResult(result);
+      setStep('result');
+    } catch (err: any) {
+      console.error("Prediction error:", err);
+      setError(err.message || "Failed to get prediction");
+      setStep('questions');
     }
-
-    const result: ScreeningResult = {
-      status,
-      domains: selectedDomains.reduce(
-        (acc, domain) => ({
-          ...acc,
-          [domain]: status,
-        }),
-        {}
-      ),
-      recommendations:
-        status === 'refer'
-          ? [isHindi ? 'विशेषज्ञ से मिलें' : 'Visit a specialist']
-          : status === 'watch'
-          ? [isHindi ? 'घर पर गतिविधियां करें' : 'Practice activities at home']
-          : [isHindi ? 'नियमित जांच जारी रखें' : 'Continue regular screening'],
-      nextSteps:
-        status === 'refer'
-          ? [isHindi ? 'रेफरल बनाएं' : 'Create Referral']
-          : status === 'watch'
-          ? [isHindi ? 'फॉलो-अप रिमाइंडर सेट करें' : 'Set Follow-up Reminder']
-          : [isHindi ? 'अगली स्क्रीनिंग' : 'Next Screening'],
-    };
-
-    setStep('result');
   };
 
   const resultConfig = {
@@ -172,38 +195,63 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
     },
   };
 
-  const progress = step === 'questions' ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
+  const domainProgress = step === 'flashcard' || step === 'questions' ? currentDomainIndex + 1 : 0;
 
   return (
     <div className="min-h-screen py-24 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Progress Bar */}
-        {step !== 'age' && step !== 'result' && step !== 'processing' && (
+        {/* Progress Indicator */}
+        {(step === 'flashcard' || step === 'questions') && (
           <motion.div
-            className="mb-8"
+            className="mb-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>
-                {isHindi ? `प्रश्न ${currentQuestionIndex + 1}/${questions.length}` : `Question ${currentQuestionIndex + 1}/${questions.length}`}
-              </span>
-              <span>{Math.round(progress)}%</span>
+            <div className="flex justify-between items-center mb-3">
+              {FIXED_DOMAINS.map((domain, idx) => (
+                <div key={domain.id} className="flex items-center gap-1">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      idx < currentDomainIndex
+                        ? 'bg-green-500 text-white'
+                        : idx === currentDomainIndex
+                        ? 'text-white'
+                        : 'bg-gray-200 text-gray-400'
+                    }`}
+                    style={idx === currentDomainIndex ? { background: domain.color } : {}}
+                  >
+                    {idx < currentDomainIndex ? '✓' : idx + 1}
+                  </div>
+                  <span
+                    className={`text-xs hidden md:inline ${
+                      idx === currentDomainIndex ? 'font-semibold text-gray-800' : 'text-gray-400'
+                    }`}
+                  >
+                    {isHindi ? domain.nameHindi : domain.name}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
               <motion.div
                 className="h-full rounded-full"
                 style={{ background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.accent})` }}
                 initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
+                animate={{ width: `${(domainProgress / FIXED_DOMAINS.length) * 100}%` }}
                 transition={{ duration: 0.5 }}
               />
+            </div>
+            <div className="text-xs text-gray-500 mt-1 text-center">
+              {isHindi
+                ? `${currentDomain.nameHindi} (${domainProgress}/${FIXED_DOMAINS.length})`
+                : `${currentDomain.name} (${domainProgress}/${FIXED_DOMAINS.length})`
+              }
             </div>
           </motion.div>
         )}
 
         <AnimatePresence mode="wait">
-          {/* Step 1: Age Selection */}
+          {/* Step 1: Age Input */}
           {step === 'age' && (
             <motion.div
               key="age"
@@ -212,119 +260,46 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
               exit={{ opacity: 0, x: -50 }}
             >
               <h2 className="text-2xl md:text-3xl font-bold mb-2 text-center" style={{ color: COLORS.textPrimary }}>
-                {t('selectAge')}
+                {isHindi ? 'बच्चे की आयु दर्ज करें' : 'Enter Child\'s Age'}
               </h2>
               <p className="text-center text-gray-600 mb-8">
-                {isHindi ? 'बच्चे की उम्र चुनें' : 'Select the child\'s age'}
+                {isHindi ? 'महीनों में आयु (12-72)' : 'Age in months (12-72)'}
               </p>
 
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-3 md:gap-4 mb-8">
-                {ageOptions.map((age) => (
-                  <motion.button
-                    key={age}
-                    className={`p-4 md:p-6 rounded-2xl font-bold text-lg md:text-xl transition-all`}
+              <div className="max-w-xs mx-auto mb-8">
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={12}
+                    max={72}
+                    value={ageInput}
+                    onChange={(e) => setAgeInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAgeSubmit(); }}
+                    placeholder={isHindi ? 'महीने' : 'Months'}
+                    className="w-full text-center text-5xl font-bold p-8 rounded-2xl outline-none transition-all"
                     style={{
-                      background: selectedAge === age ? COLORS.primary : 'rgba(255, 255, 255, 0.9)',
-                      color: selectedAge === age ? 'white' : COLORS.textPrimary,
-                      boxShadow: selectedAge === age ? `0 8px 24px ${COLORS.primary}30` : '0 4px 16px rgba(0, 0, 0, 0.08)',
+                      color: COLORS.textPrimary,
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      border: `3px solid ${ageInput && parseInt(ageInput) >= 12 && parseInt(ageInput) <= 72 ? COLORS.primary : '#e5e7eb'}`,
+                      boxShadow: ageInput ? `0 8px 24px ${COLORS.primary}30` : '0 4px 16px rgba(0, 0, 0, 0.08)',
                     }}
-                    onClick={() => setSelectedAge(age)}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {age}
-                    <div className="text-xs font-normal mt-1 opacity-80">
-                      {isHindi ? 'महीने' : 'months'}
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-
-              <div className="flex justify-center">
-                <AnimatedButton
-                  variant="primary"
-                  size="lg"
-                  disabled={!selectedAge}
-                  onClick={() => setStep('domain')}
-                  icon={<ChevronRight size={20} />}
-                >
-                  {isHindi ? 'आगे बढ़ें' : 'Continue'}
-                </AnimatedButton>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 2: Domain Selection */}
-          {step === 'domain' && (
-            <motion.div
-              key="domain"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-            >
-              <h2 className="text-2xl md:text-3xl font-bold mb-2 text-center" style={{ color: COLORS.textPrimary }}>
-                {isHindi ? 'विकास के क्षेत्र चुनें' : 'Select Development Domains'}
-              </h2>
-              <p className="text-center text-gray-600 mb-8">
-                {isHindi ? 'कम से कम एक चुनें' : 'Select at least one domain'}
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-4 mb-8">
-                {domains.map((domain) => (
-                  <motion.button
-                    key={domain.id}
-                    className={`p-6 md:p-8 rounded-2xl text-left transition-all`}
-                    style={{
-                      background: selectedDomains.includes(domain.id) ? `${domain.color}15` : 'rgba(255, 255, 255, 0.9)',
-                      border: selectedDomains.includes(domain.id) ? `2px solid ${domain.color}` : '2px solid transparent',
-                      boxShadow: selectedDomains.includes(domain.id) ? `0 8px 24px ${domain.color}20` : '0 4px 16px rgba(0, 0, 0, 0.08)',
-                    }}
-                    onClick={() => {
-                      setSelectedDomains((prev) =>
-                        prev.includes(domain.id) ? prev.filter((d) => d !== domain.id) : [...prev, domain.id]
-                      );
-                    }}
-                    whileHover={{ scale: 1.02, y: -3 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ background: `${domain.color}20` }}
-                      >
-                        {typeof domain.icon === 'string' ? (
-                          <span className="text-2xl">{domain.icon}</span>
-                        ) : (
-                          <domain.icon size={24} style={{ color: domain.color }} />
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-lg" style={{ color: COLORS.textPrimary }}>
-                          {domain.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {isHindi ? 'मील पत्थर जांचें' : 'Check milestones'}
-                        </div>
-                      </div>
-                      {selectedDomains.includes(domain.id) && (
-                        <motion.div
-                          className="ml-auto"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                        >
-                          <CheckCircle size={24} style={{ color: domain.color }} />
-                        </motion.div>
-                      )}
-                    </div>
-                  </motion.button>
-                ))}
+                  />
+                </div>
+                <p className="text-center text-sm text-gray-400 mt-2">
+                  {isHindi ? '12 से 72 महीने के बीच' : 'Between 12 and 72 months'}
+                </p>
+                {ageInput && (parseInt(ageInput) < 12 || parseInt(ageInput) > 72) && (
+                  <p className="text-center text-sm text-red-500 mt-2">
+                    {isHindi ? 'कृपया 12-72 के बीच आयु दर्ज करें' : 'Please enter age between 12-72'}
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-between">
                 <AnimatedButton
                   variant="outline"
                   size="md"
-                  onClick={() => setStep('age')}
+                  onClick={onBack}
                   icon={<ChevronLeft size={18} />}
                   iconPosition="left"
                 >
@@ -333,20 +308,152 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                 <AnimatedButton
                   variant="primary"
                   size="lg"
-                  disabled={selectedDomains.length === 0}
-                  onClick={() => setStep('questions')}
+                  disabled={!ageInput || parseInt(ageInput) < 12 || parseInt(ageInput) > 72}
+                  onClick={handleAgeSubmit}
                   icon={<ChevronRight size={20} />}
                 >
-                  {isHindi ? 'स्क्रीनिंग शुरू करें' : 'Start Screening'}
+                  {isHindi ? 'आगे बढ़ें' : 'Continue'}
                 </AnimatedButton>
               </div>
             </motion.div>
           )}
 
-          {/* Step 3: Questions */}
+          {/* Step 2: Gender Selection */}
+          {step === 'gender' && (
+            <motion.div
+              key="gender"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+            >
+              <h2 className="text-2xl md:text-3xl font-bold mb-2 text-center" style={{ color: COLORS.textPrimary }}>
+                {isHindi ? 'बच्चे का लिंग चुनें' : 'Select Child\'s Gender'}
+              </h2>
+              <p className="text-center text-gray-600 mb-8">
+                {isHindi ? 'लिंग चुनें' : 'Select gender'}
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-8 max-w-md mx-auto">
+                {['Male', 'Female'].map((gender) => (
+                  <motion.button
+                    key={gender}
+                    className={`p-6 md:p-8 rounded-2xl font-bold text-lg md:text-xl transition-all`}
+                    style={{
+                      background: selectedGender === gender ? COLORS.primary : 'rgba(255, 255, 255, 0.9)',
+                      color: selectedGender === gender ? 'white' : COLORS.textPrimary,
+                      boxShadow: selectedGender === gender ? `0 8px 24px ${COLORS.primary}30` : '0 4px 16px rgba(0, 0, 0, 0.08)',
+                    }}
+                    onClick={() => setSelectedGender(gender as 'Male' | 'Female')}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {gender === 'Male' ? (isHindi ? 'लड़का' : 'Male') : (isHindi ? 'लड़की' : 'Female')}
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="flex justify-between">
+                <AnimatedButton
+                  variant="outline"
+                  size="md"
+                  onClick={() => { setStep('age'); setSelectedAge(null); }}
+                  icon={<ChevronLeft size={18} />}
+                  iconPosition="left"
+                >
+                  {isHindi ? 'वापस' : 'Back'}
+                </AnimatedButton>
+                <AnimatedButton
+                  variant="primary"
+                  size="lg"
+                  disabled={!selectedGender}
+                  onClick={() => {
+                    setCurrentDomainIndex(0);
+                    setCurrentQuestionIndex(0);
+                    setStep('flashcard');
+                  }}
+                  icon={<ChevronRight size={20} />}
+                >
+                  {isHindi ? 'आगे बढ़ें' : 'Continue'}
+                </AnimatedButton>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Domain Flashcard */}
+          {step === 'flashcard' && currentDomain && (
+            <motion.div
+              key={`flashcard-${currentDomain.id}`}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="text-center"
+            >
+              <motion.div
+                className="p-10 md:p-16 rounded-3xl"
+                style={{
+                  background: `linear-gradient(135deg, ${currentDomain.color}10 0%, ${currentDomain.color}05 100%)`,
+                  border: `2px solid ${currentDomain.color}20`,
+                  boxShadow: `0 12px 40px ${currentDomain.color}15`,
+                }}
+              >
+                {/* Domain Icon */}
+                <motion.div
+                  className="w-28 h-28 rounded-3xl mx-auto mb-8 flex items-center justify-center"
+                  style={{ background: `linear-gradient(135deg, ${currentDomain.color}20 0%, ${currentDomain.color}10 100%)` }}
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  {typeof currentDomain.icon === 'string' ? (
+                    <span className="text-5xl">{currentDomain.icon}</span>
+                  ) : (
+                    <currentDomain.icon size={56} style={{ color: currentDomain.color }} />
+                  )}
+                </motion.div>
+
+                {/* Domain Title */}
+                <h2
+                  className="text-3xl md:text-4xl font-bold mb-4"
+                  style={{ color: currentDomain.color }}
+                >
+                  {isHindi ? currentDomain.nameHindi : currentDomain.name}
+                </h2>
+
+                {/* Domain Description */}
+                <p className="text-lg text-gray-600 mb-8 max-w-lg mx-auto">
+                  {isHindi ? currentDomain.descriptionHindi : currentDomain.description}
+                </p>
+
+                {/* Start Button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <motion.button
+                    className="px-10 py-5 text-lg rounded-2xl font-semibold flex items-center justify-center gap-3 text-white"
+                    style={{
+                      background: currentDomain.color,
+                      boxShadow: `0 8px 24px ${currentDomain.color}40`,
+                    }}
+                    onClick={() => {
+                      setCurrentQuestionIndex(0);
+                      setStep('questions');
+                    }}
+                    whileHover={{ scale: 1.03, y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    {isHindi ? 'शुरू करें' : 'Begin'}
+                    <ArrowRight size={20} />
+                  </motion.button>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Step 4: Questions */}
           {step === 'questions' && currentQuestion && (
             <motion.div
-              key={`question-${currentQuestionIndex}`}
+              key={`q-${currentDomain.id}-${currentQuestionIndex}`}
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
@@ -359,16 +466,25 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
                 }}
               >
+                {/* Question number */}
+                <div className="text-sm text-gray-400 mb-4 text-center">
+                  {isHindi
+                    ? `प्रश्न ${currentQuestionIndex + 1}/${currentDomainQuestions.length}`
+                    : `Question ${currentQuestionIndex + 1}/${currentDomainQuestions.length}`
+                  }
+                </div>
+
                 {/* Milestone icon */}
                 <motion.div
                   className="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center"
                   style={{
-                    background: `linear-gradient(135deg, ${COLORS.primary}15 0%, ${COLORS.accent}15 100%)`,
+                    background: `linear-gradient(135deg, ${currentDomain.color}15 0%, ${currentDomain.color}05 100%)`,
+                    border: `1px solid ${currentDomain.color}20`,
                   }}
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <Sparkles size={40} style={{ color: COLORS.primary }} />
+                  <Sparkles size={40} style={{ color: currentDomain.color }} />
                 </motion.div>
 
                 {/* Question */}
@@ -379,7 +495,7 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                 {/* Milestone */}
                 <p className="text-center text-gray-500 mb-6">
                   {isHindi ? 'मील पत्थर: ' : 'Milestone: '}
-                  <span className="font-medium" style={{ color: COLORS.primary }}>
+                  <span className="font-medium" style={{ color: currentDomain.color }}>
                     {isHindi ? currentQuestion.milestoneHindi : currentQuestion.milestone}
                   </span>
                 </p>
@@ -387,12 +503,12 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                 {/* Voice Button */}
                 <motion.button
                   className="flex items-center gap-2 mx-auto mb-6 px-4 py-2 rounded-full"
-                  style={{ background: `${COLORS.primary}10` }}
+                  style={{ background: `${currentDomain.color}10` }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Mic size={18} style={{ color: COLORS.primary }} />
-                  <span className="text-sm" style={{ color: COLORS.primary }}>
+                  <Mic size={18} style={{ color: currentDomain.color }} />
+                  <span className="text-sm" style={{ color: currentDomain.color }}>
                     {isHindi ? 'आवाज़ सुनें' : 'Listen'}
                   </span>
                 </motion.button>
@@ -400,9 +516,9 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                 {/* Answer Buttons */}
                 <div className="grid md:grid-cols-3 gap-4">
                   {[
-                    { value: 'yes', label: t('yes'), color: COLORS.success, icon: '✓' },
-                    { value: 'sometimes', label: t('sometimes'), color: COLORS.watch, icon: '~' },
-                    { value: 'no', label: t('no'), color: COLORS.danger, icon: '✗' },
+                    { value: 'Yes', label: t('yes'), color: COLORS.success, icon: '✓' },
+                    { value: 'Sometimes', label: t('sometimes'), color: COLORS.watch, icon: '~' },
+                    { value: 'No', label: t('no'), color: COLORS.danger, icon: '✗' },
                   ].map((answer) => (
                     <motion.button
                       key={answer.value}
@@ -421,6 +537,11 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                     </motion.button>
                   ))}
                 </div>
+                {error && (
+                  <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-xl text-center">
+                    {error}
+                  </div>
+                )}
               </motion.div>
 
               {/* AI Follow-up Slide */}
@@ -452,61 +573,44 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                           <div className="font-semibold text-sm mb-1" style={{ color: COLORS.accent }}>
                             {isHindi ? 'AI अतिरिक्त प्रश्न' : 'AI Follow-up'}
                           </div>
-                          {FOLLOW_UP_QUESTIONS[currentQuestion.domain]?.[currentFollowUpIndex] && (
-                            <>
-                              <p className="text-gray-700 mb-2">
-                                {isHindi
-                                  ? FOLLOW_UP_QUESTIONS[currentQuestion.domain][currentFollowUpIndex].questionHindi
-                                  : FOLLOW_UP_QUESTIONS[currentQuestion.domain][currentFollowUpIndex].question}
-                              </p>
-                              <p className="text-sm text-gray-500 mb-4">
-                                {isHindi
-                                  ? FOLLOW_UP_QUESTIONS[currentQuestion.domain][currentFollowUpIndex].insightHindi
-                                  : FOLLOW_UP_QUESTIONS[currentQuestion.domain][currentFollowUpIndex].insight}
-                              </p>
-                              <div className="grid grid-cols-2 gap-2">
-                                <motion.button
-                                  className="p-3 rounded-xl text-sm font-medium"
-                                  style={{ background: `${COLORS.success}15`, color: COLORS.success }}
-                                  onClick={() => handleFollowUpAnswer('yes')}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  {t('yes')}
-                                </motion.button>
-                                <motion.button
-                                  className="p-3 rounded-xl text-sm font-medium"
-                                  style={{ background: `${COLORS.danger}15`, color: COLORS.danger }}
-                                  onClick={() => handleFollowUpAnswer('no')}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  {t('no')}
-                                </motion.button>
-                              </div>
-                            </>
+                          {getFollowUpQuestion(currentQuestion.domain, currentQuestion.id) && (
+                            (() => {
+                              const followUpQ = getFollowUpQuestion(currentQuestion.domain, currentQuestion.id)!;
+                              return (
+                                <>
+                                  <p className="text-gray-700 mb-2">
+                                    {isHindi ? followUpQ.questionHindi : followUpQ.question}
+                                  </p>
+                                  <p className="text-sm text-gray-500 mb-4">
+                                    {isHindi ? followUpQ.insightHindi : followUpQ.insight}
+                                  </p>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <motion.button
+                                      className="p-3 rounded-xl text-sm font-medium"
+                                      style={{ background: `${COLORS.success}15`, color: COLORS.success }}
+                                      onClick={() => handleFollowUpAnswer('Yes')}
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                    >
+                                      {t('yes')}
+                                    </motion.button>
+                                    <motion.button
+                                      className="p-3 rounded-xl text-sm font-medium"
+                                      style={{ background: `${COLORS.danger}15`, color: COLORS.danger }}
+                                      onClick={() => handleFollowUpAnswer('No')}
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                    >
+                                      {t('no')}
+                                    </motion.button>
+                                  </div>
+                                </>
+                              );
+                            })()
                           )}
                         </div>
                       </div>
                     </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* AI Insight */}
-              <AnimatePresence>
-                {showAiInsight && !showFollowUp && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="flex items-center gap-2 p-4 rounded-xl"
-                    style={{ background: `${COLORS.primary}10` }}
-                  >
-                    <Sparkles size={18} style={{ color: COLORS.primary }} />
-                    <span className="text-sm" style={{ color: COLORS.primary }}>
-                      {isHindi ? 'AI अगला प्रश्न तैयार कर रहा है...' : 'AI preparing next question...'}
-                    </span>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -547,7 +651,7 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
           )}
 
           {/* Result Screen */}
-          {step === 'result' && (
+          {step === 'result' && predictionResult && (
             <motion.div
               key="result"
               className="text-center"
@@ -559,12 +663,8 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                 className="w-40 h-40 mx-auto mb-8 rounded-full flex items-center justify-center"
                 style={{
                   background: resultConfig[
-                    Object.values(answers).filter((a) => a === 'no').length >= 2
-                      ? 'refer'
-                      : Object.values(answers).filter((a) => a === 'no').length === 1 ||
-                        Object.values(answers).filter((a) => a === 'sometimes').length >= 2
-                      ? 'watch'
-                      : 'on-track'
+                    predictionResult.predicted_category === 'Refer Now' ? 'refer' :
+                    predictionResult.predicted_category === 'Watch' ? 'watch' : 'on-track'
                   ].gradient,
                   boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
                 }}
@@ -573,9 +673,8 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                 transition={{ type: 'spring', delay: 0.3 }}
               >
                 {(() => {
-                  const noCount = Object.values(answers).filter((a) => a === 'no').length;
-                  const sometimesCount = Object.values(answers).filter((a) => a === 'sometimes').length;
-                  const status = noCount >= 2 ? 'refer' : noCount === 1 || sometimesCount >= 2 ? 'watch' : 'on-track';
+                  const status = predictionResult.predicted_category === 'Refer Now' ? 'refer' :
+                                 predictionResult.predicted_category === 'Watch' ? 'watch' : 'on-track';
                   const IconComponent = resultConfig[status].icon;
                   return <IconComponent size={60} color="white" />;
                 })()}
@@ -583,9 +682,8 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
 
               {/* Result Text */}
               {(() => {
-                const noCount = Object.values(answers).filter((a) => a === 'no').length;
-                const sometimesCount = Object.values(answers).filter((a) => a === 'sometimes').length;
-                const status = noCount >= 2 ? 'refer' : noCount === 1 || sometimesCount >= 2 ? 'watch' : 'on-track';
+                const status = predictionResult.predicted_category === 'Refer Now' ? 'refer' :
+                               predictionResult.predicted_category === 'Watch' ? 'watch' : 'on-track';
                 const config = resultConfig[status];
 
                 return (
@@ -597,16 +695,24 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4 }}
                     >
-                      {config.title}
+                      {predictionResult.predicted_category}
                     </motion.h2>
                     <motion.p
-                      className="text-xl mb-8"
+                      className="text-xl mb-2"
                       style={{ color: COLORS.textSecondary }}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.5 }}
                     >
-                      {config.message}
+                      {predictionResult.recommendation}
+                    </motion.p>
+                    <motion.p
+                      className="text-md mb-8 text-gray-500"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.55 }}
+                    >
+                      Confidence: {(predictionResult.confidence * 100).toFixed(1)}% | Next Action: {predictionResult.next_action}
                     </motion.p>
 
                     <motion.div
@@ -629,9 +735,8 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                 transition={{ delay: 0.7 }}
               >
                 {(() => {
-                  const noCount = Object.values(answers).filter((a) => a === 'no').length;
-                  const sometimesCount = Object.values(answers).filter((a) => a === 'sometimes').length;
-                  const status = noCount >= 2 ? 'refer' : noCount === 1 || sometimesCount >= 2 ? 'watch' : 'on-track';
+                  const status = predictionResult.predicted_category === 'Refer Now' ? 'refer' :
+                                 predictionResult.predicted_category === 'Watch' ? 'watch' : 'on-track';
 
                   if (status === 'refer') {
                     return (
@@ -639,7 +744,7 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                         <AnimatedButton
                           variant="danger"
                           size="lg"
-                          onClick={() => onComplete({ status: 'refer', domains: {}, recommendations: [], nextSteps: [] })}
+                          onClick={() => onComplete({ status: 'refer', domains: {}, recommendations: [predictionResult.recommendation], nextSteps: [predictionResult.next_action] })}
                           icon={<ArrowRight size={20} />}
                         >
                           {t('createReferral')}
@@ -655,7 +760,7 @@ const ScreeningFlow: React.FC<ScreeningFlowProps> = ({ onComplete, onBack }) => 
                         <AnimatedButton
                           variant="accent"
                           size="lg"
-                          onClick={() => onComplete({ status: 'watch', domains: {}, recommendations: [], nextSteps: [] })}
+                          onClick={() => onComplete({ status: 'watch', domains: {}, recommendations: [predictionResult.recommendation], nextSteps: [predictionResult.next_action] })}
                           icon={<Clock size={20} />}
                           iconPosition="left"
                         >

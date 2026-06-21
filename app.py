@@ -5,8 +5,17 @@ import pickle
 import pandas as pd
 import numpy as np
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 app=FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 MODEL_VERSION='1.0.0'
 
@@ -162,11 +171,11 @@ def Predict(USERINPUT : Dict):
     next = next_actions_mapping[risk_level]
 
     return {
-        'Risk Level' : risk_level,
+        'predicted_category' : risk_level,
         'confidence' : confidence,
         'class_confidence' : class_probabilities,
         'recommendation' : recommend,
-        'Next Action' : next
+        'next_action' : next
     }
 
 
@@ -174,7 +183,7 @@ def Predict(USERINPUT : Dict):
 def Predict_Premium (user_input:USERINPUT):
     try:
         prediction=Predict(user_input.model_dump(by_alias=True))
-        return JSONResponse(status_code=200,content={'Predicted Category' : prediction})
+        return prediction
     
     except Exception as e : 
         return JSONResponse(status_code=500,content={'error' : str(e)})
