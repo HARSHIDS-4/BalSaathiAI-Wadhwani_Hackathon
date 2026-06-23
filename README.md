@@ -1,9 +1,9 @@
-# BalSaathiAI-Wadhwani_Hackathon
+# BalSaathiAI 🌱
 ### *Har Baccha, Sahi Samay — Every Child, At The Right Time*
 
 > AI-powered early developmental screening platform for children aged 0–6 years in rural India, built for Anganwadi and ASHA workers on the frontlines.
 
-**Shai for Shiksha Hackathon 2026 — Powered by Wadhwani AI**
+**Shai for Shiksha Hackathon 2026 — Powered by Wadhwani AI | Team Vibe Before Code**
 
 ---
 
@@ -11,180 +11,147 @@
 
 **[🌐 View Platform →](https://bal-saathi-ai-wadhwani-hackathon.vercel.app/)**
 
+> ⚠️ The screening flow requires the FastAPI backend to be running and reachable — see [Setup](#-setup--run-locally) below. If the live link's screening step fails to return a result, the backend may not be deployed/reachable at that moment.
+
 ---
 
 ## 🚨 The Problem
 
-In India, **13.7 million children** live with developmental disabilities. The majority are identified only after age 5–6 — well past the critical 0–3 year intervention window.
-
-| Reality | Number |
-|---|---|
-| Children with developmental disabilities in India | 13.7 Million |
-| Average age of diagnosis in rural India | 5–6 Years |
-| Critical intervention window | 0–3 Years |
-| Anganwadi workers with no screening tool | 1.4 Million |
-| Scalable village-level screening systems | 0 |
-
-### Why does this happen?
-
-- Existing screening tools are designed for doctors — not frontline workers
-- No standardized protocol at the village level
-- Referral systems exist on paper but are never tracked
-- 60%+ Anganwadi centres have poor or no internet connectivity
-- Tools are in English — unusable for workers in rural Bihar or Odisha
-
-**By the time most children are identified, the window for intervention has already closed.**
+In India, **13.7 million children** live with developmental disabilities. The majority are identified only after age 5–6 — well past the critical 0–3 year intervention window. India's **1.4 million Anganwadi workers** — the people closest to these children — have no standardized, AI-assisted tool to screen for delays during routine home visits.
 
 ---
 
-## 💡 Our Solution — BalSaathiAI
+## 💡 Our Solution
 
-A warm, intelligent, offline-first AI platform that empowers Anganwadi workers to:
+BalSaathiAI lets a frontline worker screen a child across four developmental domains in under 5 minutes, get a real-time AI risk classification, generate a referral, and track whether the family actually followed through.
 
-1. **Screen** children for developmental delays in under 5 minutes
-2. **Flag** risk across 4 domains using adaptive AI logic
-3. **Refer** families to the nearest care centre with one tap
-4. **Track** follow-ups so no child falls through the cracks
+```
+Worker selects child
+      ↓
+Answers domain-wise milestone questions
+(Speech & Language → Motor Skills → Social & Emotional → Cognitive)
+      ↓
+"No" answers trigger adaptive follow-up questions
+      ↓
+Complete answer set sent to FastAPI /predict endpoint
+      ↓
+Trained Logistic Regression model returns risk classification
+      ↓
+🟢 On Track | 🟡 Watch | 🔴 Refer Now
+      ↓
+If Refer Now → referral generated → follow-up tracked
+```
 
-> BalSaathiAI is not a diagnostic tool. It is an intelligent triage and referral support system built specifically for India's frontline health workers.
+---
+
+## 🧠 The AI — Real, Not Mocked
+
+This is not a rule-based if/else system behind a UI. A trained scikit-learn **Logistic Regression** model (`model.pkl`) is loaded by FastAPI at startup and called on every screening submission.
+
+| | |
+|---|---|
+| Model | Logistic Regression (Pipeline: ordinal encoding → feature selection → classifier) |
+| Test Accuracy | 0.84 |
+| Macro F1 | 0.84 |
+| Training data | 50,000-record synthetic dataset, ASQ-3-informed weighted labels |
+| Full evaluation | See [`EVALUATION.md`](./EVALUATION.md) — dataset, train/test split, confusion matrix, model comparison |
+
+Full training, comparison against Random Forest and XGBoost, and an age-feature ablation study are documented in [`BalSaathi AI.ipynb`](./BalSaathi%20AI.ipynb).
 
 ---
 
 ## ✨ Key Features
 
-### 🧠 Adaptive AI Screening
-- Age-based milestone questions from validated ASQ-3 framework
-- Covers 4 domains — Speech & Language, Motor Skills, Social & Emotional, Cognitive
-- If a worker answers "No" — system triggers targeted follow-up questions automatically
-- Feels conversational, not like a survey form
-
-### 🚦 3-Level Risk Flagging
-- 🟢 **On Track** — No action needed
-- 🟡 **Watch** — Monitor closely, re-screen in 6 weeks
-- 🔴 **Refer Now** — Developmental concern detected, immediate referral recommended
-
-### 📋 Smart Referral Generation
-- Auto-filled referral slip with child details and flagged domains
-- Nearest RBSK centre shown with contact and directions
-- Pre-written WhatsApp message to parent in their language — warm, simple, non-scary
-- One-tap sharing
-
-### 🔁 Closed-Loop Follow-Up Tracking
-- Worker receives reminder 2 weeks after referral
-- Status update — Visited / Not Yet / Needs Help
-- Supervisor dashboard reflects every pending case in real time
-- **No child falls through the cracks**
-
-### 🎙️ Voice-Powered Accessibility
-- Floating voice command button on home screen
-- Worker can navigate by speaking — "Screen new child", "Show follow-ups"
-- Questions read aloud via Text-to-Speech in selected language
-- Designed for low-literacy frontline workers
-
-
-### 📡 Offline-First Architecture
-- Complete screening, result generation, and referral creation works without internet
-- Data syncs automatically when connectivity is available
-- Sync status indicator — never shows a broken error screen
-
-### 📊 Supervisor Dashboard
-- Block-level screening coverage per village
-- Flagged children, referrals made, follow-ups pending
-- **Risk Pulse AI Insight** — actionable district-level observations
-- Accountability built in — shows which worker owns each pending case
-
-### 🎓 Worker Training Module
-- Instagram-story style illustrated learning guides
-- Topics: How to ask questions, how to explain referrals, how to handle distressed parents
-- No PDFs. No videos. Swipeable illustrated cards.
+- **Adaptive AI Screening** — "No" responses trigger targeted follow-up questions per domain, not a static checklist
+- **3-Level Risk Flagging** — On Track / Watch / Refer Now, with domain-level context
+- **Referral Generation** — nearest centre details + parent-facing message
+- **Follow-Up Tracking** — closes the loop after referral
+- **Supervisor Dashboard** — block-level screening coverage and pending cases
+- **Multilingual UI** — Hindi, Bengali, Marathi, Tamil, Telugu, English (toggle)
+- **Worker Training Module** — swipeable illustrated guides, not PDFs
 
 ---
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│                  Anganwadi Worker                   │
-│              (Android Mobile Device)                │
-└─────────────────────┬───────────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────────┐
-│              BalSaathiAI Platform                   │
-│                                                     │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────┐ │
-│  │  Screening  │  │  Adaptive AI │  │  Referral  │ │
-│  │   Module    │→ │    Engine    │→ │  Generator │ │
-│  └─────────────┘  └──────────────┘  └────────────┘ │
-│                                            │        │
-│  ┌─────────────┐  ┌──────────────┐         │        │
-│  │  Follow-Up  │  │  Supervisor  │←────────┘        │
-│  │   Tracker   │  │  Dashboard   │                  │
-│  └─────────────┘  └──────────────┘                  │
-│                                                     │
-│  [Offline Storage Layer — AsyncStorage + SQLite]    │
-│  [Syncs to central DB when internet available]      │
-└─────────────────────────────────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────────┐
-│           District Health System                    │
-│     RBSK Centres | Block Supervisors | PHCs         │
-└─────────────────────────────────────────────────────┘
-```
-
----
-
-## 🛠️ Tech Stack
+## 🏗️ Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React + Vite |
-| Styling | TailwindCSS |
-| Animations | Framer Motion + GSAP |
-| 3D Elements | Three.js / React Three Fiber |
-| Offline Storage | AsyncStorage + SQLite |
-| Text-to-Speech | Expo Speech (hi-IN / en-IN) |
-| Deployment | Vercel |
-| Screening Logic | ASQ-3 validated decision tree |
+| Frontend | React 18 + TypeScript + Vite |
+| Styling | Tailwind CSS |
+| Animation | Framer Motion, GSAP, Three.js |
+| Backend / ML API | FastAPI |
+| ML | scikit-learn (Logistic Regression), pandas, numpy |
+| Database (planned) | Supabase |
+| Frontend hosting | Vercel |
+| Backend hosting | Render / Railway (free tier) |
 
 ---
 
-## 📱 Screening Flow
+## 📁 Project Structure
 
 ```
-Worker opens app
-      ↓
-Selects child profile
-      ↓
-Confirms age in months
-      ↓
-Answers 5–7 milestone questions
-(picture-based, voice-assisted)
-      ↓
-AI processes responses adaptively
-      ↓
-Risk flag generated — 🟢 🟡 🔴
-      ↓
-If 🔴 → Referral slip auto-generated
-      ↓
-WhatsApp message sent to parent
-      ↓
-Worker marks referral made
-      ↓
-2 weeks later → Follow-up reminder
-      ↓
-Worker updates status
-      ↓
-Supervisor dashboard reflects outcome
+BalSaathiAI-Wadhwani_Hackathon/
+├── app.py                      # FastAPI backend — loads model.pkl, exposes /predict
+├── model.pkl                  # Trained Logistic Regression pipeline
+├── BalSaathi AI.ipynb          # Full ML notebook — training, evaluation, ablation study
+├── EVALUATION.md               # Dataset, metrics, confusion matrix, justification
+├── DEPLOYMENT.md               # Pilot plan, cost, scaling path
+├── src/
+│   ├── components/
+│   │   ├── screening/          # ScreeningFlow.tsx — domain-wise question flow, calls API
+│   │   ├── dashboard/          # Worker dashboard
+│   │   ├── referral/           # Referral generation UI
+│   │   ├── followup/           # Follow-up tracker
+│   │   ├── analytics/          # Supervisor dashboard
+│   │   ├── training/           # Worker training modules
+│   │   ├── landing/            # Marketing/landing page
+│   │   └── splash/             # Language selection splash screen
+│   ├── services/
+│   │   └── api.ts              # predictRisk() — calls FastAPI /predict
+│   ├── data/                   # Demo/seed data
+│   ├── contexts/                # React context providers
+│   └── constants/
+├── public/
+├── package.json
+└── vite.config.ts
 ```
 
 ---
 
-## 👤 Demo Credentials
+## 🚀 Setup — Run Locally
 
-The platform is preloaded with demo data for judging.
+This project has **two parts that must run together**: the React frontend and the FastAPI backend.
 
-**Worker:** Savitri Devi
-**Centre:** Anganwadi Centre 14, Rampur, Jharkhand
+### 1. Backend (FastAPI + ML model)
+
+```bash
+# From project root
+python -m venv myenv
+source myenv/bin/activate        # Windows: myenv\Scripts\activate
+
+pip install fastapi uvicorn scikit-learn pandas numpy
+
+uvicorn app:app --reload --port 8000
+```
+
+API will run at `http://127.0.0.1:8000`
+Interactive docs at `http://127.0.0.1:8000/docs`
+
+### 2. Frontend (React + Vite)
+
+```bash
+# In a separate terminal, from project root
+npm install
+npm run dev
+```
+
+Frontend will run at `http://localhost:5173`
+
+> **Note:** `src/services/api.ts` currently points to `http://127.0.0.1:8000`. For the live Vercel deployment to work end-to-end, this must point to a deployed backend URL (Render/Railway) via an environment variable rather than localhost.
+
+---
+
+## 📊 Demo Data
 
 | Child | Age | Status |
 |---|---|---|
@@ -193,108 +160,33 @@ The platform is preloaded with demo data for judging.
 | Kavya | 30 months | 🟡 Watch |
 | Ramu | 12 months | ⚪ Not Screened |
 
-**Supervisor Dashboard:**
-47 screened · 6 flagged · 4 referrals · 2 follow-ups complete
+**Worker:** Savitri Devi — Anganwadi Centre 14, Rampur, Jharkhand
 
 ---
 
-## 🚀 Run Locally
+## 📄 Documentation
 
-```bash
-# Clone the repository
-git clone https://github.com/YOUR_USERNAME/balsaathiai.git
-
-# Navigate to project
-cd balsaathiai
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Open in browser
-http://localhost:5173
-```
-
----
-
-## 📁 Project Structure
-
-```
-balsaathiai/
-├── public/
-│   └── assets/
-├── src/
-│   ├── components/
-│   │   ├── Hero/
-│   │   ├── Screening/
-│   │   ├── Referral/
-│   │   ├── FollowUp/
-│   │   ├── Dashboard/
-│   │   └── Supervisor/
-│   ├── data/
-│   │   └── seedData.js        # Demo data
-│   ├── utils/
-│   │   ├── storage.js         # Offline storage layer
-│   │   └── screeningLogic.js  # ASQ-3 decision engine
-│   ├── App.jsx
-│   └── main.jsx
-├── README.md
-├── package.json
-└── vite.config.js
-```
-
----
-
-## 🎯 Impact Potential
-
-BalSaathiAI is designed to scale across India's existing frontline health infrastructure — no new workers needed, no new infrastructure required.
-
-- **1.4 million** Anganwadi workers — existing deployment network
-- **158 million** children under 6 in India — addressable population
-- **RBSK programme** — existing government referral infrastructure
-- **0 to 3 years** — the window where intervention changes everything
-
-> One screening. Five minutes. One child's life changed.
-
----
-
-## 🧩 What Makes BalSaathiAI Different
-
-| Feature | Other Solutions | BalSaathiAI |
-|---|---|---|
-| Designed for frontline workers | ❌ Built for doctors | ✅ |
-| Works offline | ❌ Requires internet | ✅ |
-| Closes the referral loop | ❌ Screening only | ✅ |
-| Regional language support | ❌ English only | ✅ 6 languages |
-| Low-literacy UI | ❌ Text heavy | ✅ Picture + voice |
-| Supervisor accountability | ❌ No visibility | ✅ Dashboard |
+| File | Covers |
+|---|---|
+| [`EVALUATION.md`](./EVALUATION.md) | Dataset description, train/test split, model comparison, confusion matrix |
+| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Pilot plan, infrastructure cost, scaling path, sustainability model |
+| [`BalSaathi AI.ipynb`](./BalSaathi%20AI.ipynb) | Full ML pipeline — EDA, preprocessing, model training, ablation study |
 
 ---
 
 ## ⚠️ Disclaimer
 
-BalSaathiAI is a **triage and referral support tool** — not a diagnostic system. It does not replace medical professionals. All flagged cases are referred to qualified specialists through established government channels (RBSK, PHCs).
+BalSaathiAI is a **triage and referral support tool** — not a diagnostic system. It does not replace medical professionals. All flagged cases are referred to qualified specialists through established government channels (RBSK, PHCs). Model is trained on a clinically-informed **synthetic** dataset; real-world validation is the explicit goal of our proposed Phase 2 pilot.
 
 ---
 
-## 👥 Team
-
-Built with purpose at **Shai for Shiksha Hackathon 2026**
-Powered by **Wadhwani AI**
+## 👥 Team — Vibe Before Code
 
 | Name | Role |
 |---|---|
-| [Harshi] | Product Lead |
-| [Akshita] | Developer |
-| [Ankita] | UX / Research |
-
----
-
-## 📄 License
-
-MIT License — Open for use, adaptation, and deployment by NGOs, government bodies, and social impact organisations working in early childhood development.
+| Harshi Gupta | Machine Learning Developer — Scikit-Learn, XGBoost, LightGBM |
+| Akshita Tyagi | Full-Stack Developer — React, Node.js, Tailwind CSS |
+| Ankita Rai | Frontend Developer — React, Tailwind CSS |
 
 ---
 
@@ -303,7 +195,6 @@ MIT License — Open for use, adaptation, and deployment by NGOs, government bod
 **हर बच्चा, सही समय पर।**
 *Every child, at the right time.*
 
-**[🌐 Live Platform](https://bal-saathi-ai-wadhwani-hackathon.vercel.app/) · [📋 Problem Statement](#-the-problem) · [💡 Solution](#-our-solution--balsaathiai)**
+**[🌐 Live Platform](https://bal-saathi-ai-wadhwani-hackathon.vercel.app/)**
 
 </div>
-
