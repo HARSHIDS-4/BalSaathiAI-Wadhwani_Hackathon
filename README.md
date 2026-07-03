@@ -11,8 +11,6 @@
 
 **[🌐 View Platform →](https://bal-saathi-ai-wadhwani-hackathon.vercel.app/)**
 
-> ⚠️ The screening flow requires the FastAPI backend to be running and reachable — see [Setup](#-setup--run-locally) below. If the live link's screening step fails to return a result, the backend may not be deployed/reachable at that moment.
-
 ---
 
 ## 🚨 The Problem
@@ -46,7 +44,7 @@ If Refer Now → referral generated → follow-up tracked
 
 ## 🧠 The AI — Real, Not Mocked
 
-This is not a rule-based if/else system behind a UI. A trained scikit-learn **Logistic Regression** model (`model.pkl`) is loaded by FastAPI at startup and called on every screening submission.
+A trained scikit-learn **Logistic Regression** model (`model.pkl`) is loaded by FastAPI at startup and called on every screening submission. No hardcoded outputs.
 
 | | |
 |---|---|
@@ -54,21 +52,21 @@ This is not a rule-based if/else system behind a UI. A trained scikit-learn **Lo
 | Test Accuracy | 0.84 |
 | Macro F1 | 0.84 |
 | Training data | 50,000-record synthetic dataset, ASQ-3-informed weighted labels |
-| Full evaluation | See [`EVALUATION.md`](./EVALUATION.md) — dataset, train/test split, confusion matrix, model comparison |
+| Full evaluation | See [`EVALUATION.md`](./EVALUATION.md) |
 
-Full training, comparison against Random Forest and XGBoost, and an age-feature ablation study are documented in [`BalSaathi AI.ipynb`](./BalSaathi%20AI.ipynb).
+Full training, model comparison (RF vs XGBoost vs LR), and age-feature ablation study documented in [`BalSaathi AI.ipynb`](./BalSaathi%20AI.ipynb).
 
 ---
 
 ## ✨ Key Features
 
-- **Adaptive AI Screening** — "No" responses trigger targeted follow-up questions per domain, not a static checklist
-- **3-Level Risk Flagging** — On Track / Watch / Refer Now, with domain-level context
-- **Referral Generation** — nearest centre details + parent-facing message
+- **Adaptive AI Screening** — "No" responses trigger targeted follow-up questions per domain
+- **3-Level Risk Flagging** — On Track / Watch / Refer Now with domain-level context
+- **Smart Referral Generation** — nearest RBSK centre + parent WhatsApp message
 - **Follow-Up Tracking** — closes the loop after referral
 - **Supervisor Dashboard** — block-level screening coverage and pending cases
-- **Multilingual UI** — Hindi, Bengali, Marathi, Tamil, Telugu, English (toggle)
-- **Worker Training Module** — swipeable illustrated guides, not PDFs
+- **Multilingual UI** — Hindi, Bengali, Marathi, Tamil, Telugu, English
+- **Worker Training Module** — swipeable illustrated guides
 
 ---
 
@@ -79,11 +77,11 @@ Full training, comparison against Random Forest and XGBoost, and an age-feature 
 | Frontend | React 18 + TypeScript + Vite |
 | Styling | Tailwind CSS |
 | Animation | Framer Motion, GSAP, Three.js |
-| Backend / ML API | FastAPI |
-| ML | scikit-learn (Logistic Regression), pandas, numpy |
-| Database (planned) | Supabase |
+| Backend / ML API | FastAPI + Uvicorn |
+| ML | scikit-learn, pandas, numpy |
+| Containerization | Docker |
 | Frontend hosting | Vercel |
-| Backend hosting | Render / Railway (free tier) |
+| Backend hosting | Docker Hub → Render / Railway |
 
 ---
 
@@ -92,24 +90,26 @@ Full training, comparison against Random Forest and XGBoost, and an age-feature 
 ```
 BalSaathiAI-Wadhwani_Hackathon/
 ├── app.py                      # FastAPI backend — loads model.pkl, exposes /predict
-├── model.pkl                  # Trained Logistic Regression pipeline
+├── model.pkl                   # Trained Logistic Regression pipeline
+├── requirements.txt            # Python dependencies
+├── Dockerfile                  # Docker config for backend
 ├── BalSaathi AI.ipynb          # Full ML notebook — training, evaluation, ablation study
 ├── EVALUATION.md               # Dataset, metrics, confusion matrix, justification
 ├── DEPLOYMENT.md               # Pilot plan, cost, scaling path
 ├── src/
 │   ├── components/
-│   │   ├── screening/          # ScreeningFlow.tsx — domain-wise question flow, calls API
+│   │   ├── screening/          # ScreeningFlow.tsx — domain-wise flow, calls /predict
 │   │   ├── dashboard/          # Worker dashboard
 │   │   ├── referral/           # Referral generation UI
 │   │   ├── followup/           # Follow-up tracker
 │   │   ├── analytics/          # Supervisor dashboard
 │   │   ├── training/           # Worker training modules
-│   │   ├── landing/            # Marketing/landing page
-│   │   └── splash/             # Language selection splash screen
+│   │   ├── landing/            # Landing page
+│   │   └── splash/             # Language selection
 │   ├── services/
-│   │   └── api.ts              # predictRisk() — calls FastAPI /predict
-│   ├── data/                   # Demo/seed data
-│   ├── contexts/                # React context providers
+│   │   └── api.ts              # predictRisk() — typed call to FastAPI /predict
+│   ├── data/
+│   ├── contexts/
 │   └── constants/
 ├── public/
 ├── package.json
@@ -120,34 +120,61 @@ BalSaathiAI-Wadhwani_Hackathon/
 
 ## 🚀 Setup — Run Locally
 
-This project has **two parts that must run together**: the React frontend and the FastAPI backend.
+This project has **two parts**: React frontend + FastAPI backend. Both must run together.
 
-### 1. Backend (FastAPI + ML model)
+### Option A — Docker (Recommended for Backend)
 
 ```bash
-# From project root
+# Pull the backend image from Docker Hub
+docker pull harshi16gupta/balsaathi
+
+# Run the container
+docker run -d -p 8000:8000 harshi16gupta/balsaathi
+```
+
+Backend runs at `http://localhost:8000`
+API docs at `http://localhost:8000/docs`
+
+---
+
+### Option B — Run Backend Without Docker
+
+```bash
+# Create virtual environment
 python -m venv myenv
 source myenv/bin/activate        # Windows: myenv\Scripts\activate
 
-pip install fastapi uvicorn scikit-learn pandas numpy
+# Install dependencies
+pip install -r requirements.txt
 
+# Start FastAPI server
 uvicorn app:app --reload --port 8000
 ```
 
-API will run at `http://127.0.0.1:8000`
-Interactive docs at `http://127.0.0.1:8000/docs`
+---
 
-### 2. Frontend (React + Vite)
+### Frontend (both options)
 
 ```bash
-# In a separate terminal, from project root
+# In a separate terminal
 npm install
 npm run dev
 ```
 
-Frontend will run at `http://localhost:5173`
+Frontend runs at `http://localhost:5173`
 
-> **Note:** `src/services/api.ts` currently points to `http://127.0.0.1:8000`. For the live Vercel deployment to work end-to-end, this must point to a deployed backend URL (Render/Railway) via an environment variable rather than localhost.
+
+
+---
+
+## 🐳 Docker Hub
+
+**Image:** [`harshi16gupta/balsaathi`](https://hub.docker.com/r/harshi16gupta/balsaathi)
+
+```bash
+docker pull harshi16gupta/balsaathi
+docker run -d -p 8000:8000 harshi16gupta/balsaathi
+```
 
 ---
 
@@ -168,15 +195,15 @@ Frontend will run at `http://localhost:5173`
 
 | File | Covers |
 |---|---|
-| [`EVALUATION.md`](./EVALUATION.md) | Dataset description, train/test split, model comparison, confusion matrix |
-| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Pilot plan, infrastructure cost, scaling path, sustainability model |
-| [`BalSaathi AI.ipynb`](./BalSaathi%20AI.ipynb) | Full ML pipeline — EDA, preprocessing, model training, ablation study |
+| [`EVALUATION.md`](./EVALUATION.md) | Dataset, train/test split, model comparison, confusion matrix |
+| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Pilot plan, infrastructure cost, scaling path |
+| [`BalSaathi AI.ipynb`](./BalSaathi%20AI.ipynb) | Full ML pipeline — EDA, training, ablation study |
 
 ---
 
 ## ⚠️ Disclaimer
 
-BalSaathiAI is a **triage and referral support tool** — not a diagnostic system. It does not replace medical professionals. All flagged cases are referred to qualified specialists through established government channels (RBSK, PHCs). Model is trained on a clinically-informed **synthetic** dataset; real-world validation is the explicit goal of our proposed Phase 2 pilot.
+BalSaathiAI is a **triage and referral support tool** — not a diagnostic system. Model is trained on a clinically-informed **synthetic** dataset; real-world validation is the explicit goal of our proposed Phase 2 pilot. See `EVALUATION.md` for full disclosure.
 
 ---
 
@@ -184,17 +211,15 @@ BalSaathiAI is a **triage and referral support tool** — not a diagnostic syste
 
 | Name | Role |
 |---|---|
-| Harshi Gupta | Machine Learning Developer — Scikit-Learn, XGBoost, LightGBM |
+| Harshi Gupta | ML Developer — scikit-learn, FastAPI, Docker |
 | Akshita Tyagi | Full-Stack Developer — React, Node.js, Tailwind CSS |
 | Ankita Rai | Frontend Developer — React, Tailwind CSS |
 
 ---
 
-<div align="center">
 
 **हर बच्चा, सही समय पर।**
 *Every child, at the right time.*
 
-**[🌐 Live Platform](https://bal-saathi-ai-wadhwani-hackathon.vercel.app/)**
+**[🌐 Live Platform](https://bal-saathi-ai-wadhwani-hackathon.vercel.app/)** · **[🐳 Docker Hub](https://hub.docker.com/r/harshi16gupta/balsaathi)**
 
-</div>
