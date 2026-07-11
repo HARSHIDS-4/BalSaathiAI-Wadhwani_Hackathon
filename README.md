@@ -46,15 +46,23 @@ If Refer Now → referral generated → follow-up tracked
 
 A trained scikit-learn **Logistic Regression** model (`model.pkl`) is loaded by FastAPI at startup and called on every screening submission. No hardcoded outputs.
 
-| | |
-|---|---|
-| Model | Logistic Regression (Pipeline: ordinal encoding → feature selection → classifier) |
-| Test Accuracy | 0.84 |
-| Macro F1 | 0.84 |
-| Training data | 50,000-record synthetic dataset, ASQ-3-informed weighted labels |
-| Full evaluation | See [`EVALUATION.md`](./EVALUATION.md) |
+### Model Comparison
 
-Full training, model comparison (RF vs XGBoost vs LR), and age-feature ablation study documented in [`BalSaathi AI.ipynb`](./BalSaathi%20AI.ipynb).
+Four models were evaluated. Logistic Regression was chosen for its balance of accuracy, interpretability, and inference speed, making it ideal for on-device deployment by frontline workers.
+
+| Model | Test Accuracy | Macro F1 | Watch F1 | Refer Now Recall |
+|---|---|---|---|---|
+| **Logistic Regression** | **0.84** | **0.84** | 0.74 | 0.86 |
+| Random Forest (default) | 0.80 | 0.79 | 0.67 | 0.85 |
+| Random Forest (tuned) | 0.82 | 0.82 | 0.71 | 0.87 |
+| XGBoost | 0.84 | 0.84 | **0.75** | 0.86 |
+
+**Why Logistic Regression?**
+It matched the performance of more complex models like XGBoost on key metrics while being significantly more lightweight and interpretable—a crucial factor for a public health tool where understanding model behavior is important.
+
+The full training process, exploratory data analysis (EDA), and detailed model comparisons are documented in the `BalSaathi AI.ipynb` notebook.
+
+Full training, model comparison (RF vs XGBoost vs LR), documented in [`BalSaathi AI.ipynb`](./BalSaathiAI.ipynb).
 
 ---
 
@@ -78,10 +86,10 @@ Full training, model comparison (RF vs XGBoost vs LR), and age-feature ablation 
 | Styling | Tailwind CSS |
 | Animation | Framer Motion, GSAP, Three.js |
 | Backend / ML API | FastAPI + Uvicorn |
-| ML | scikit-learn, pandas, numpy |
+| ML | scikit-learn, pandas, numpy,XGBoost |
 | Containerization | Docker |
 | Frontend hosting | Vercel |
-| Backend hosting | Docker Hub → Render / Railway |
+| Backend hosting | Docker Hub → Render  |
 
 ---
 
@@ -163,7 +171,7 @@ npm run dev
 
 Frontend runs at `http://localhost:5173`
 
-
+ 
 
 ---
 
@@ -191,16 +199,6 @@ docker run -d -p 8000:8000 harshi16gupta/balsaathi
 
 ---
 
-## 📄 Documentation
-
-| File | Covers |
-|---|---|
-| [`EVALUATION.md`](./EVALUATION.md) | Dataset, train/test split, model comparison, confusion matrix |
-| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Pilot plan, infrastructure cost, scaling path |
-| [`BalSaathi AI.ipynb`](./BalSaathi%20AI.ipynb) | Full ML pipeline — EDA, training, ablation study |
-
----
-
 ## ⚠️ Disclaimer
 
 BalSaathiAI is a **triage and referral support tool** — not a diagnostic system. Model is trained on a clinically-informed **synthetic** dataset; real-world validation is the explicit goal of our proposed Phase 2 pilot. See `EVALUATION.md` for full disclosure.
@@ -222,4 +220,3 @@ BalSaathiAI is a **triage and referral support tool** — not a diagnostic syste
 *Every child, at the right time.*
 
 **[🌐 Live Platform](https://bal-saathi-ai-wadhwani-hackathon.vercel.app/)** · **[🐳 Docker Hub](https://hub.docker.com/r/harshi16gupta/balsaathi)**
-
