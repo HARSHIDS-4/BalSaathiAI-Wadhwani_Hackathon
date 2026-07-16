@@ -9,10 +9,6 @@ export const LANGUAGES = [
   { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', flag: '🇮🇳' },
 ];
 
-// Use curated royalty-free images from Unsplash Source for realistic portraits.
-// These are fetched at runtime from the internet. If you prefer local copies,
-// download images into `public/assets/` and update the URLs below.
-
 export const TRANSLATIONS: Record<string, Record<string, string>> = {
   hi: {
     // Hero
@@ -171,8 +167,7 @@ export const DEMO_WORKER = {
   id: 'worker-001',
   name: 'Savitri Devi',
   nameHindi: 'सावित्री देवी',
-  // vendored local portrait (run `npm run vendor-images` to download)
-  avatar: '/assets/vendor/worker-1.jpg',
+  avatar: 'https://images.unsplash.com/photo-1531123897727-8f9e37d05c26?w=150&h=150&fit=crop&crop=face',
   centre: 'Anganwadi Centre 14',
   village: 'Rampur',
   district: 'Jharkhand',
@@ -198,7 +193,7 @@ export const DEMO_CHILDREN = [
     motherNameHindi: 'रानी देवी',
     village: 'Rampur',
     centre: 'Anganwadi Centre 14',
-    photo: '/assets/vendor/child-1.jpg',
+    photo: 'https://images.unsplash.com/photo-1503454530258-124fbc43f3d1?w=200&h=200&fit=crop&crop=face',
     status: 'refer',
     statusHindi: 'अभी रेफर करें',
     flaggedDomain: 'Speech & Language',
@@ -217,7 +212,7 @@ export const DEMO_CHILDREN = [
     motherNameHindi: 'सुनीता देवी',
     village: 'Rampur',
     centre: 'Anganwadi Centre 14',
-    photo: '/assets/vendor/child-2.jpg',
+    photo: 'https://images.unsplash.com/photo-1545558014-5797be6f6fb7?w=200&h=200&fit=crop&crop=face',
     status: 'on-track',
     statusHindi: 'सही राह पर',
     flaggedDomain: null,
@@ -235,7 +230,7 @@ export const DEMO_CHILDREN = [
     motherNameHindi: 'प्रिया शर्मा',
     village: 'Rampur',
     centre: 'Anganwadi Centre 14',
-    photo: '/assets/vendor/child-3.jpg',
+    photo: 'https://images.unsplash.com/photo-1516627145496-d6bd64963f1c?w=200&h=200&fit=crop&crop=face',
     status: 'watch',
     statusHindi: 'निगरानी',
     flaggedDomain: 'Motor Skills',
@@ -253,18 +248,13 @@ export const DEMO_CHILDREN = [
     motherNameHindi: 'लक्ष्मी देवी',
     village: 'Rampur',
     centre: 'Anganwadi Centre 14',
-    photo: '/assets/vendor/child-4.jpg',
+    photo: 'https://images.unsplash.com/photo-1491013516836-7db6cdee2dc5?w=200&h=200&fit=crop&crop=face',
     status: 'not-screened',
     statusHindi: 'स्क्रीन नहीं हुआ',
     flaggedDomain: null,
     lastScreened: null,
   },
 ];
-
-export const formatChildAge = (months: number, isHindi: boolean) => {
-  const unit = isHindi ? (months === 1 ? 'महीना' : 'महीने') : (months === 1 ? 'month' : 'months');
-  return `${months} ${unit}`;
-};
 
 // Referral Centres
 export const REFERRAL_CENTRES = [
@@ -317,45 +307,23 @@ export const SCREENING_QUESTIONS: Record<string, Record<string, Array<{
   speech: {
     '18-24': [
       {
-        id: 'speech_q1',
+        id: 'speech-1',
         ageRange: '18-24',
-        question: 'Does child respond when called by name?',
-        questionHindi: 'क्या बच्चा अपने नाम से बुलाए जाने पर प्रतिक्रिया देता है?',
+        question: 'Can the child say at least 10-15 meaningful words?',
+        questionHindi: 'क्या बच्चा कम से कम 10-15 सार्थक शब्द बोल सकता है?',
         domain: 'speech',
-        milestone: 'Responds to name',
-        milestoneHindi: 'नाम पर प्रतिक्रिया करता है',
+        milestone: 'Says 10-15 words',
+        milestoneHindi: '10-15 शब्द बोलता है',
         illustration: 'speech',
       },
       {
-        id: 'speech_q2',
+        id: 'speech-2',
         ageRange: '18-24',
-        question: 'Can child communicate basic needs using words or gestures?',
-        questionHindi: 'क्या बच्चा शब्दों या इशारों का उपयोग करके बुनियादी जरूरतों का संचार कर सकता है?',
+        question: 'Does the child follow simple instructions like "come here" or "give me"?',
+        questionHindi: 'क्या बच्चा आदेशों का पालन करता है जैसे "यहाँ आओ" या "दे दो"?',
         domain: 'speech',
-        milestone: 'Communicates needs',
-        milestoneHindi: 'जरूरतों का संचार करता है',
-        illustration: 'speech',
-      },
-    ],
-    '24-36': [
-      {
-        id: 'speech_q1',
-        ageRange: '24-36',
-        question: 'Does child respond when called by name?',
-        questionHindi: 'क्या बच्चा अपने नाम से बुलाए जाने पर प्रतिक्रिया देता है?',
-        domain: 'speech',
-        milestone: 'Responds to name',
-        milestoneHindi: 'नाम पर प्रतिक्रिया करता है',
-        illustration: 'speech',
-      },
-      {
-        id: 'speech_q2',
-        ageRange: '24-36',
-        question: 'Can child communicate basic needs using words or gestures?',
-        questionHindi: 'क्या बच्चा शब्दों या इशारों का उपयोग करके बुनियादी जरूरतों का संचार कर सकता है?',
-        domain: 'speech',
-        milestone: 'Communicates needs',
-        milestoneHindi: 'जरूरतों का संचार करता है',
+        milestone: 'Follows simple instructions',
+        milestoneHindi: 'आदेशों का पालन करता है',
         illustration: 'speech',
       },
     ],
@@ -363,9 +331,9 @@ export const SCREENING_QUESTIONS: Record<string, Record<string, Array<{
   motor: {
     '18-24': [
       {
-        id: 'motor_q1',
+        id: 'motor-1',
         ageRange: '18-24',
-        question: 'Can child walk without support?',
+        question: 'Can the child walk without support?',
         questionHindi: 'क्या बच्चा बिना सहारे चल सकता है?',
         domain: 'motor',
         milestone: 'Walks independently',
@@ -373,35 +341,13 @@ export const SCREENING_QUESTIONS: Record<string, Record<string, Array<{
         illustration: 'motor',
       },
       {
-        id: 'motor_q2',
+        id: 'motor-2',
         ageRange: '18-24',
-        question: 'Can child climb stairs or furniture independently?',
-        questionHindi: 'क्या बच्चा स्वतंत्र रूप से सीढ़ियों या फर्नीचर पर चढ़ सकता है?',
+        question: 'Can the child stack 2-3 blocks on top of each other?',
+        questionHindi: 'क्या बच्चा 2-3 ब्लॉक को एक के ऊपर एक रख सकता है?',
         domain: 'motor',
-        milestone: 'Climbs independently',
-        milestoneHindi: 'स्वतंत्र रूप से चढ़ता है',
-        illustration: 'motor',
-      },
-    ],
-    '24-36': [
-      {
-        id: 'motor_q1',
-        ageRange: '24-36',
-        question: 'Can child walk without support?',
-        questionHindi: 'क्या बच्चा बिना सहारे चल सकता है?',
-        domain: 'motor',
-        milestone: 'Walks independently',
-        milestoneHindi: 'स्वतंत्र रूप से चलता है',
-        illustration: 'motor',
-      },
-      {
-        id: 'motor_q2',
-        ageRange: '24-36',
-        question: 'Can child climb stairs or furniture independently?',
-        questionHindi: 'क्या बच्चा स्वतंत्र रूप से सीढ़ियों या फर्नीचर पर चढ़ सकता है?',
-        domain: 'motor',
-        milestone: 'Climbs independently',
-        milestoneHindi: 'स्वतंत्र रूप से चढ़ता है',
+        milestone: 'Stacks blocks',
+        milestoneHindi: 'ब्लॉक रखता है',
         illustration: 'motor',
       },
     ],
@@ -409,45 +355,23 @@ export const SCREENING_QUESTIONS: Record<string, Record<string, Array<{
   social: {
     '18-24': [
       {
-        id: 'social_q1',
+        id: 'social-1',
         ageRange: '18-24',
-        question: 'Does child make eye contact during interaction?',
-        questionHindi: 'क्या बच्चा बातचीत के दौरान आंखों से संपर्क बनाता है?',
+        question: 'Does the child show interest in other children?',
+        questionHindi: 'क्या बच्चा अन्य बच्चों में रुचि दिखाता है?',
         domain: 'social',
-        milestone: 'Makes eye contact',
-        milestoneHindi: 'आंखों से संपर्क बनाता है',
+        milestone: 'Shows interest in peers',
+        milestoneHindi: 'साथियों में रुचि दिखाता है',
         illustration: 'social',
       },
       {
-        id: 'social_q2',
+        id: 'social-2',
         ageRange: '18-24',
-        question: 'Does child engage in play with caregivers or peers?',
-        questionHindi: 'क्या बच्चा देखभाल करने वालों या साथियों के साथ खेल में संलग्न होता है?',
+        question: 'Does the child respond to their name when called?',
+        questionHindi: 'क्या बच्चा अपने नाम के पुकारने पर प्रतिक्रिया करता है?',
         domain: 'social',
-        milestone: 'Engages in play',
-        milestoneHindi: 'खेल में संलग्न होता है',
-        illustration: 'social',
-      },
-    ],
-    '24-36': [
-      {
-        id: 'social_q1',
-        ageRange: '24-36',
-        question: 'Does child make eye contact during interaction?',
-        questionHindi: 'क्या बच्चा बातचीत के दौरान आंखों से संपर्क बनाता है?',
-        domain: 'social',
-        milestone: 'Makes eye contact',
-        milestoneHindi: 'आंखों से संपर्क बनाता है',
-        illustration: 'social',
-      },
-      {
-        id: 'social_q2',
-        ageRange: '24-36',
-        question: 'Does child engage in play with caregivers or peers?',
-        questionHindi: 'क्या बच्चा देखभाल करने वालों या साथियों के साथ खेल में संलग्न होता है?',
-        domain: 'social',
-        milestone: 'Engages in play',
-        milestoneHindi: 'खेल में संलग्न होता है',
+        milestone: 'Responds to name',
+        milestoneHindi: 'नाम पर प्रतिक्रिया करता है',
         illustration: 'social',
       },
     ],
@@ -455,45 +379,23 @@ export const SCREENING_QUESTIONS: Record<string, Record<string, Array<{
   cognitive: {
     '18-24': [
       {
-        id: 'cognitive_q1',
+        id: 'cognitive-1',
         ageRange: '18-24',
-        question: 'Can child identify familiar people or objects?',
-        questionHindi: 'क्या बच्चा परिचित लोगों या वस्तुओं की पहचान कर सकता है?',
+        question: 'Can the child point to show you something they want?',
+        questionHindi: 'क्या बच्चा उंगली से इशारा करके अपनी इच्छा बता सकता है?',
         domain: 'cognitive',
-        milestone: 'Identifies familiar things',
-        milestoneHindi: 'परिचित चीजों की पहचान करता है',
+        milestone: 'Points to indicate wants',
+        milestoneHindi: 'इच्छा बताने के लिए इशारा करता है',
         illustration: 'cognitive',
       },
       {
-        id: 'cognitive_q2',
+        id: 'cognitive-2',
         ageRange: '18-24',
-        question: 'Can child follow age-appropriate instructions?',
-        questionHindi: 'क्या बच्चा उम्र के अनुसार निर्देशों का पालन कर सकता है?',
+        question: 'Can the child find an object when you hide it under a cloth?',
+        questionHindi: 'क्या बच्चा वस्तु को कपड़े के नीचे छिपाने पर खोज सकता है?',
         domain: 'cognitive',
-        milestone: 'Follows instructions',
-        milestoneHindi: 'निर्देशों का पालन करता है',
-        illustration: 'cognitive',
-      },
-    ],
-    '24-36': [
-      {
-        id: 'cognitive_q1',
-        ageRange: '24-36',
-        question: 'Can child identify familiar people or objects?',
-        questionHindi: 'क्या बच्चा परिचित लोगों या वस्तुओं की पहचान कर सकता है?',
-        domain: 'cognitive',
-        milestone: 'Identifies familiar things',
-        milestoneHindi: 'परिचित चीजों की पहचान करता है',
-        illustration: 'cognitive',
-      },
-      {
-        id: 'cognitive_q2',
-        ageRange: '24-36',
-        question: 'Can child follow age-appropriate instructions?',
-        questionHindi: 'क्या बच्चा उम्र के अनुसार निर्देशों का पालन कर सकता है?',
-        domain: 'cognitive',
-        milestone: 'Follows instructions',
-        milestoneHindi: 'निर्देशों का पालन करता है',
+        milestone: 'Finds hidden objects',
+        milestoneHindi: 'छिपी हुई वस्तुएं खोजता है',
         illustration: 'cognitive',
       },
     ],
@@ -510,66 +412,45 @@ export const FOLLOW_UP_QUESTIONS: Record<string, Array<{
 }>> = {
   speech: [
     {
-      id: 'speech_followup_q1',
-      question: 'If not, does child react to familiar voices?',
-      questionHindi: 'यदि नहीं, तो क्या बच्चा परिचित आवाजों पर प्रतिक्रिया करता है?',
+      id: 'follow-speech-1',
+      question: 'Does the child understand what you say even if they don\'t speak?',
+      questionHindi: 'क्या बच्चा समझता है आप क्या कह रहे हैं, भले ही बोल न सके?',
       insight: 'This helps understand if hearing and understanding are developing.',
       insightHindi: 'इससे पता चलता है कि सुनना और समझना सही हो रहा है।',
     },
     {
-      id: 'speech_followup_q2',
-      question: 'If not, does child attempt communication through sounds or pointing?',
-      questionHindi: 'यदि नहीं, तो क्या बच्चा ध्वनियों या इशारों के माध्यम से संचार का प्रयास करता है?',
+      id: 'follow-speech-2',
+      question: 'Does the child make sounds like "ma", "ba", "da"?',
+      questionHindi: 'क्या बच्चा "मा", "बा", "दा" जैसी आवाजें निकालता है?',
       insight: 'Babbling is an important step before words.',
       insightHindi: 'शब्दों से पहले बड़बड़ाना एक महत्वपूर्ण कदम है।',
     },
   ],
   motor: [
     {
-      id: 'motor_followup_q1',
-      question: 'If not, can child stand while holding furniture?',
-      questionHindi: 'यदि नहीं, तो क्या बच्चा फर्नीचर पकड़कर खड़ा हो सकता है?',
+      id: 'follow-motor-1',
+      question: 'Can the child hold small objects with their fingers?',
+      questionHindi: 'क्या बच्चा छोटी वस्तुओं को उंगलियों से पकड़ सकता है?',
       insight: 'Fine motor skills are important for daily activities.',
       insightHindi: 'छोटी मोटर कौशल दैनिक गतिविधियों के लिए महत्वपूर्ण हैं।',
-    },
-    {
-      id: 'motor_followup_q2',
-      question: 'If not, can child move independently between locations?',
-      questionHindi: 'यदि नहीं, तो क्या बच्चा स्थानों के बीच स्वतंत्र रूप से जा सकता है?',
-      insight: 'Gross motor skills are important for mobility.',
-      insightHindi: 'सकल मोटर कौशल गतिशीलता के लिए महत्वपूर्ण हैं।',
     },
   ],
   social: [
     {
-      id: 'social_followup_q1',
-      question: 'If not, does child respond to smiling faces?',
-      questionHindi: 'यदि नहीं, तो क्या बच्चा मुस्कुराते चेहरों पर प्रतिक्रिया करता है?',
+      id: 'follow-social-1',
+      question: 'Does the child look at you when you talk to them?',
+      questionHindi: 'क्या बच्चा आपके साथ बात करते समय आपको देखता है?',
       insight: 'Eye contact is important for social development.',
       insightHindi: 'आंखों का संपर्क सामाजिक विकास के लिए महत्वपूर्य है।',
-    },
-    {
-      id: 'social_followup_q2',
-      question: 'If not, does child show interest when others are playing nearby?',
-      questionHindi: 'यदि नहीं, तो क्या बच्चा दूसरों के पास खेलने पर रुचि दिखाता है?',
-      insight: 'Social interaction is key for development.',
-      insightHindi: 'सामाजिक संपर्क विकास के लिए महत्वपूर्ण है।',
     },
   ],
   cognitive: [
     {
-      id: 'cognitive_followup_q1',
-      question: 'If not, can child recognize their primary caregiver?',
-      questionHindi: 'यदि नहीं, तो क्या बच्चा अपने प्राथमिक देखभालकर्ता को पहचान सकता है?',
+      id: 'follow-cognitive-1',
+      question: 'Does the child recognize familiar people like mother, father?',
+      questionHindi: 'क्या बच्चा मां, पिता जैसे परिचित लोगों को पहचानता है?',
       insight: 'Recognizing familiar faces is a key cognitive milestone.',
       insightHindi: 'परिचित चेहरों को पहचानना एक महत्वपूर्ण संज्ञानात्मक सीमा है।',
-    },
-    {
-      id: 'cognitive_followup_q2',
-      question: 'If not, can child follow simple one-step commands?',
-      questionHindi: 'यदि नहीं, तो क्या बच्चा सरल एक-चरणीय आदेशों का पालन कर सकता है?',
-      insight: 'Following instructions is a key cognitive milestone.',
-      insightHindi: 'निर्देशों का पालन करना एक महत्वपूर्ण संज्ञानात्मक सीमा है।',
     },
   ],
 };
@@ -610,14 +491,14 @@ export const TRAINING_MODULES = [
 
 // Impact Statistics
 export const IMPACT_STATS = {
-  childrenScreened: 0,
-  childrenFlagged: 0,
-  referralsGenerated: 0,
-  followUpsCompleted: 0,
-  districts: 0,
-  anganwadiWorkers: 0,
-  accuracyRate: 0,
-  parentSatisfaction: 0,
+  childrenScreened: 15732,
+  childrenFlagged: 1243,
+  referralsGenerated: 891,
+  followUpsCompleted: 678,
+  districts: 47,
+  anganwadiWorkers: 2134,
+  accuracyRate: 94.2,
+  parentSatisfaction: 97.8,
 };
 
 // Activity Timeline

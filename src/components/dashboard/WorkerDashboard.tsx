@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { COLORS } from '../../constants/design-system';
 import { useLanguage } from '../../contexts/AppContext';
-import { DEMO_WORKER, DEMO_CHILDREN, ACTIVITY_TIMELINE, formatChildAge } from '../../data/demo-data';
+import { DEMO_WORKER, DEMO_CHILDREN, ACTIVITY_TIMELINE } from '../../data/demo-data';
 import GlassCard from '../shared/GlassCard';
 import AnimatedButton from '../shared/AnimatedButton';
 import StatusBadge from '../shared/StatusBadge';
@@ -273,8 +273,6 @@ const WorkerDashboard: React.FC<WorkerDashboardProps> = ({ onNavigate }) => {
               onClick={() => {
                 if (card.id === 'screen') onNavigate('screening');
                 else if (card.id === 'followups') onNavigate('followups');
-                else if (card.id === 'children') onNavigate('children');
-                else if (card.id === 'report') onNavigate('report');
               }}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -350,30 +348,12 @@ const WorkerDashboard: React.FC<WorkerDashboardProps> = ({ onNavigate }) => {
                     src={child.photo}
                     alt={child.name}
                     className="w-12 h-12 rounded-full object-cover"
-                    onError={(event) => {
-                      const target = event.currentTarget;
-                      if (target.dataset.fallbackApplied === 'true') return;
-                      target.dataset.fallbackApplied = 'true';
-                      target.src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
-                          <defs>
-                            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" stop-color="#f2d6b3" />
-                              <stop offset="100%" stop-color="#c79f7d" />
-                            </linearGradient>
-                          </defs>
-                          <rect width="120" height="120" rx="60" fill="url(#g)" />
-                          <circle cx="60" cy="48" r="22" fill="rgba(255,255,255,0.88)" />
-                          <path d="M30 105c7-20 21-30 30-30s23 10 30 30" fill="rgba(255,255,255,0.88)" />
-                        </svg>
-                      `)}`;
-                    }}
                   />
                   <div className="flex-1">
                     <div className="font-semibold" style={{ color: COLORS.textPrimary }}>
                       {isHindi ? child.nameHindi : child.name}
                     </div>
-                    <div className="text-sm text-gray-500">{formatChildAge(child.age, isHindi)}</div>
+                    <div className="text-sm text-gray-500">{child.ageDisplay}</div>
                   </div>
                   <StatusBadge status={child.status as any} size="sm" />
                 </motion.div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { COLORS } from '../../constants/design-system';
 import { useLanguage } from '../../contexts/AppContext';
-import { REFERRAL_CENTRES, PARENT_EXPLAINER_STEPS, DEMO_CHILDREN, formatChildAge } from '../../data/demo-data';
+import { REFERRAL_CENTRES, PARENT_EXPLAINER_STEPS, DEMO_CHILDREN } from '../../data/demo-data';
 import AnimatedButton from '../shared/AnimatedButton';
 import GlassCard from '../shared/GlassCard';
 import {
@@ -79,30 +79,12 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ childId, onBack, onComp
                     src={child.photo}
                     alt={child.name}
                     className="w-20 h-20 rounded-2xl object-cover"
-                    onError={(event) => {
-                      const target = event.currentTarget;
-                      if (target.dataset.fallbackApplied === 'true') return;
-                      target.dataset.fallbackApplied = 'true';
-                      target.src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
-                          <defs>
-                            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" stop-color="#f2d6b3" />
-                              <stop offset="100%" stop-color="#c79f7d" />
-                            </linearGradient>
-                          </defs>
-                          <rect width="120" height="120" rx="24" fill="url(#g)" />
-                          <circle cx="60" cy="48" r="22" fill="rgba(255,255,255,0.88)" />
-                          <path d="M30 105c7-20 21-30 30-30s23 10 30 30" fill="rgba(255,255,255,0.88)" />
-                        </svg>
-                      `)}`;
-                    }}
                   />
                   <div className="flex-1">
                     <h3 className="text-xl font-bold" style={{ color: COLORS.textPrimary }}>
                       {isHindi ? child.nameHindi : child.name}
                     </h3>
-                    <p className="text-gray-500">{formatChildAge(child.age, isHindi)}</p>
+                    <p className="text-gray-500">{child.ageDisplay}</p>
                     <p className="text-sm" style={{ color: COLORS.danger }}>
                       {isHindi ? 'विशेषज्ञ से मिलें' : 'Visit Specialist'}
                     </p>

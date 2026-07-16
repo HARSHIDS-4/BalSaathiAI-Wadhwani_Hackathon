@@ -34,8 +34,6 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
     xl: 'px-10 py-5 text-xl rounded-3xl',
   };
 
-  const SHADOWS_CARD = '0 4px 16px rgba(0, 0, 0, 0.08)';
-
   const variantStyles = {
     primary: {
       background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)`,
@@ -76,6 +74,8 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
     },
   };
 
+  const SHADOWS_CARD = '0 4px 16px rgba(0, 0, 0, 0.08)';
+
   const hoverVariants = {
     rest: { scale: 1, y: 0 },
     hover: {
@@ -102,7 +102,7 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
       initial="rest"
       whileHover={!disabled ? "hover" : "rest"}
       whileTap={!disabled ? "tap" : "rest"}
-      variants={hoverVariants as any}
+      variants={hoverVariants}
     >
       {loading ? (
         <motion.div

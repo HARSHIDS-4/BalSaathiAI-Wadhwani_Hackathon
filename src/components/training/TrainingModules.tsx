@@ -15,10 +15,11 @@ import {
   Play,
   Clock,
   X,
+  Lightbulb,
 } from 'lucide-react';
 
 const TrainingModules: React.FC = () => {
-  const { t, isHindi } = useLanguage();
+  const { isHindi } = useLanguage();
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 
