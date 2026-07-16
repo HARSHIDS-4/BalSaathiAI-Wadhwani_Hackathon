@@ -2,60 +2,35 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { COLORS } from '../../constants/design-system';
 import { useLanguage } from '../../contexts/AppContext';
-import { IMPACT_STATS } from '../../data/demo-data';
-import AnimatedCounter from '../shared/AnimatedCounter';
 import { Users, Heart, TrendingUp, MapPin, Award, Sparkles } from 'lucide-react';
 
 const ImpactSection: React.FC = () => {
   const { isHindi } = useLanguage();
 
-  const stats = [
+  const problemStats = [
     {
-      value: IMPACT_STATS.childrenScreened,
-      label: isHindi ? 'बच्चे स्क्रीन हुए' : 'Children Screened',
-      icon: Users,
-      color: COLORS.primary,
+      value: '13.7M',
+      label: isHindi ? 'भारत में विकासात्मक अक्षमताओं वाले बच्चे' : 'Children with developmental disabilities in India',
+      color: '#E63946',
+      subtext: null,
     },
     {
-      value: IMPACT_STATS.childrenFlagged,
-      label: isHindi ? 'बच्चे फ्लैग हुए' : 'Children Flagged',
-      icon: Heart,
-      color: COLORS.danger,
+      value: '0-3 Yrs',
+      label: isHindi ? 'महत्वपूर्ण हस्तक्षेप विंडो' : 'Critical intervention window',
+      color: '#FFB703',
+      subtext: isHindi ? 'औसत निदान उम्र 5-6 साल' : 'Average diagnosis happens at age 5-6',
     },
     {
-      value: IMPACT_STATS.referralsGenerated,
-      label: isHindi ? 'रेफरल बनाए गए' : 'Referrals Generated',
-      icon: TrendingUp,
-      color: COLORS.accent,
+      value: '1.4M',
+      label: isHindi ? 'स्क्रीनिंग टूल नहीं रखने वाले आंगनवाड़ी कार्यकर्ता' : 'Anganwadi workers with no screening tool',
+      color: '#E63946',
+      subtext: null,
     },
     {
-      value: IMPACT_STATS.followUpsCompleted,
-      label: isHindi ? 'फॉलो-अप पूरे हुए' : 'Follow-Ups Completed',
-      icon: Award,
-      color: COLORS.success,
-    },
-  ];
-
-  const highlights = [
-    {
-      value: IMPACT_STATS.districts,
-      label: isHindi ? 'जिले' : 'Districts',
-      icon: MapPin,
-    },
-    {
-      value: IMPACT_STATS.anganwadiWorkers,
-      label: isHindi ? 'आंगनवाड़ी कार्यकर्ता' : 'Anganwadi Workers',
-      icon: Users,
-    },
-    {
-      value: `${IMPACT_STATS.accuracyRate}%`,
-      label: isHindi ? 'सटीकता' : 'Accuracy',
-      icon: Sparkles,
-    },
-    {
-      value: `${IMPACT_STATS.parentSatisfaction}%`,
-      label: isHindi ? 'माता-पिता संतुष्टि' : 'Parent Satisfaction',
-      icon: Heart,
+      value: '0',
+      label: isHindi ? 'स्केलेबल गांव-स्तरीय स्क्रीनिंग सिस्टम' : 'Scalable village-level screening systems',
+      color: '#2D6A4F',
+      subtext: isHindi ? 'अब तक।' : 'Until now.',
     },
   ];
 
@@ -83,93 +58,56 @@ const ImpactSection: React.FC = () => {
           </motion.div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4" style={{ color: COLORS.textPrimary }}>
-            {isHindi ? 'हर बच्चे को मदद मिल रही है' : 'Every Child Getting Help'}
+            {isHindi ? 'हर बच्चे को मदद मिल रही है' : 'The Window Is Closing'}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             {isHindi
               ? 'भारल के ग्रामीण इलाकों में बच्चों के विकास का सकारात्मक प्रभाव देखें'
-              : 'See the positive impact on child development in rural India'}
+              : "And most of India doesn't know it."}
           </p>
         </motion.div>
 
-        {/* Main Stats Grid */}
+        
+
+        {/* Problem-side Stats Grid */}
         <motion.div
-          className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
+          className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          {stats.map((stat, i) => (
+          {problemStats.map((stat, i) => (
             <motion.div
               key={i}
-              className="relative p-6 md:p-8 rounded-2xl overflow-hidden"
+              className="relative p-6 md:p-8 rounded-2xl overflow-hidden text-center"
               style={{
-                background: 'rgba(255, 255, 255, 0.9)',
-                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+                background: 'rgba(255, 255, 255, 0.95)',
+                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)',
               }}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -5, boxShadow: '0 10px 40px rgba(0, 0, 0, 0.12)' }}
+              transition={{ delay: i * 0.08 }}
             >
-              {/* Background gradient */}
-              <div
-                className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20"
-                style={{ background: stat.color }}
-              />
-
               <div className="relative z-10">
-                <motion.div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: `${stat.color}15` }}
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                >
-                  <stat.icon size={24} style={{ color: stat.color }} />
-                </motion.div>
-
                 <div className="text-3xl md:text-4xl font-bold mb-1" style={{ color: stat.color }}>
-                  <AnimatedCounter target={stat.value} />
+                  {stat.value}
                 </div>
-                <div className="text-sm text-gray-600">{stat.label}</div>
+                <div className="text-sm text-gray-700 mb-1">{stat.label}</div>
+                {stat.subtext && (
+                  <div className="text-xs text-gray-500">{stat.subtext}</div>
+                )}
               </div>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Highlight Bar */}
-        <motion.div
-          className="p-6 md:p-8 rounded-3xl"
-          style={{
-            background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%)`,
-            boxShadow: `0 20px 60px ${COLORS.primary}30`,
-          }}
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {highlights.map((item, i) => (
-              <motion.div
-                key={i}
-                className="text-center"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 + i * 0.1 }}
-              >
-                <motion.div
-                  className="w-10 h-10 mx-auto mb-3 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(255, 255, 255, 0.2)' }}
-                >
-                  <item.icon size={20} color="white" />
-                </motion.div>
-                <div className="text-2xl md:text-3xl font-bold text-white">{item.value}</div>
-                <div className="text-sm text-white/80">{item.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+        {/* Disclaimer */}
+        <div className="max-w-3xl mx-auto text-center mt-4">
+          <p style={{ color: '#6B7280', fontSize: '0.875rem' }}>
+            BalSaathiAI is a triage and referral support tool — not a diagnostic system. Screening logic is adapted from the globally validated ASQ-3 framework. This platform is currently at prototype stage.
+          </p>
+        </div>
 
         {/* Visual Impact */}
         <motion.div
